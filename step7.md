@@ -1,4 +1,4 @@
-# Step 6 - Intercom Device Authentication
+# Step 7 - Intercom Device Authentication
 
 ## Goal
 
@@ -19,7 +19,7 @@ Add authentication for the intercom Android SBC device using a device provisioni
 
 ---
 
-## Step 6.1 - Add JWT Support to Signaling Server
+## Step 7.1 - Add JWT Support to Signaling Server
 
 1. Install dependencies:
    ```bash
@@ -58,7 +58,7 @@ Add authentication for the intercom Android SBC device using a device provisioni
 
 ---
 
-## Step 6.2 - Add Device Management Storage
+## Step 7.2 - Add Device Management Storage
 
 1. Create a simple in-memory store (replace with database later):
    ```javascript
@@ -123,66 +123,38 @@ Add authentication for the intercom Android SBC device using a device provisioni
 
 ---
 
-## Step 6.3 - Add REST Endpoints to Signaling Server
+## Step 7.3 - Add REST Endpoints to Signaling Server
 
-1. Install Express (or add HTTP handling alongside WebSocket):
-   ```bash
-   npm install express cors
-   ```
+1. Add REST endpoints to the existing HTTP server in `server.js` (port 8080, alongside WebSocket).
+   No need for Express — we use the built-in `http` module that already powers the WebSocket server.
 
-2. Add REST endpoints to `server.js`:
+2. Import auth and device modules at the top of `server.js`:
    ```javascript
-   const express = require('express');
-   const cors = require('cors');
-   const app = express();
-   app.use(cors());
-   app.use(express.json());
-   
-   // Admin: Create a new device (returns provisioning code)
-   app.post('/api/admin/devices', (req, res) => {
-     const { buildingId, name } = req.body;
-     if (!buildingId || !name) {
-       return res.status(400).json({ error: 'buildingId and name required' });
-     }
-     const { deviceId, code } = createDevice(buildingId, name);
-     res.json({ deviceId, provisioningCode: code });
-   });
-   
-   // Device: Exchange provisioning code for JWT
-   app.post('/api/devices/provision', (req, res) => {
-     const { code } = req.body;
-     if (!code) {
-       return res.status(400).json({ error: 'Provisioning code required' });
-     }
-     
-     const device = validateProvisioningCode(code);
-     if (!device) {
-       return res.status(401).json({ error: 'Invalid or expired code' });
-     }
-     
-     const token = generateDeviceToken(device.deviceId, device.buildingId);
-     res.json({
-       token,
-       deviceId: device.deviceId,
-       buildingId: device.buildingId,
-     });
-   });
-   
-   // Admin: Revoke a device
-   app.post('/api/admin/devices/:deviceId/revoke', (req, res) => {
-     revokeDevice(req.params.deviceId);
-     res.json({ success: true });
-   });
-   
-   // Start HTTP server on port 8081 (WebSocket remains on 8080)
-   app.listen(8081, () => {
-     console.log('REST API running on port 8081');
-   });
+   const { generateDeviceToken, verifyToken } = require('./auth');
+   const { createDevice, validateProvisioningCode, getDevice, revokeDevice } = require('./devices');
    ```
+
+3. Add a `readBody()` helper and CORS headers to the HTTP handler, then add these routes:
+
+   ```javascript
+   // Admin: Create a new device (returns provisioning code)
+   // POST /api/admin/devices  { buildingId, name }
+   // → { deviceId, provisioningCode }
+
+   // Device: Exchange provisioning code for JWT
+   // POST /api/devices/provision  { code }
+   // → { token, deviceId, buildingId }
+
+   // Admin: Revoke a device
+   // POST /api/admin/devices/:deviceId/revoke
+   // → { success: true }
+   ```
+
+   All endpoints run on the same port 8080 as the WebSocket server.
 
 ---
 
-## Step 6.4 - Authenticate WebSocket Connections
+## Step 7.4 - Authenticate WebSocket Connections
 
 1. Update WebSocket `register` handler to require token for intercom role:
    ```javascript
@@ -220,7 +192,7 @@ Add authentication for the intercom Android SBC device using a device provisioni
 
 ---
 
-## Step 6.5 - Add Setup Screen to Intercom App
+## Step 7.5 - Add Setup Screen to Intercom App
 
 1. Install AsyncStorage for persisting the JWT:
    ```bash
@@ -362,7 +334,7 @@ Add authentication for the intercom Android SBC device using a device provisioni
 
 ---
 
-## Step 6.6 - Update Intercom App.js for Auth Flow
+## Step 7.6 - Update Intercom App.js for Auth Flow
 
 1. Update `App.js` to check for saved token on startup:
    ```javascript
@@ -410,7 +382,7 @@ Add authentication for the intercom Android SBC device using a device provisioni
 
 ---
 
-## Step 6.7 - Testing Checklist
+## Step 7.7 - Testing Checklist
 
 1. **Create Device:**
    - Call `POST /api/admin/devices` with buildingId and name
@@ -436,15 +408,15 @@ Add authentication for the intercom Android SBC device using a device provisioni
 
 ---
 
-## Step 6.8 - Project Structure After Completion
+## Step 7.8 - Project Structure After Completion
 
 ```
 vidrom-ai/
 ├── vidrom-signaling-server/
-│   ├── server.js           # Updated: REST endpoints + WS auth
+│   ├── server.js           # Updated: REST endpoints on port 8080 + WS auth
 │   ├── auth.js             # New: JWT generation/verification
 │   ├── devices.js          # New: device management store
-│   └── package.json        # Added: jsonwebtoken, express, cors
+│   └── package.json        # Added: jsonwebtoken, uuid
 ├── vidrom-ai-intercom/
 │   ├── App.js              # Updated: auth flow check
 │   ├── DeviceSetupScreen.js # New: provisioning code entry UI
@@ -480,3 +452,4 @@ Admin                Server              Intercom
 - JWTs have 1-year expiry (configurable)
 - Revoked devices are immediately blocked on WebSocket reconnect
 - In production: use environment variable for JWT_SECRET, add admin auth to REST endpoints, replace in-memory store with database
+- No Express dependency needed — REST endpoints run on the same `http` server as WebSocket (port 8080)
