@@ -63,31 +63,24 @@ Verify in the AWS Console that the security group now has rules for UDP 3478, TC
 SSH into the instance:
 
 ```bash
-ssh -i /path/to/vidrom-useast1-v2.pem ec2-user@52.203.117.37
+ssh -i /c/Users/wwguy/Downloads/vidrom-useast1-v2.pem ec2-user@52.203.117.37
 ```
 
-Install coturn:
+Install coturn (build from source — Amazon Linux 2023 doesn't have coturn in its repos or EPEL):
 
 ```bash
-# Amazon Linux 2023
-sudo dnf install -y coturn
+sudo dnf install -y gcc make openssl-devel libevent-devel git
+cd /tmp && git clone https://github.com/coturn/coturn.git && cd coturn
+./configure --prefix=/usr/local
+make && sudo make install
 ```
 
-> **Note:** If coturn is not available in the default repos, install from EPEL:
-> ```bash
-> sudo dnf install -y epel-release
-> sudo dnf install -y coturn
-> ```
->
-> If neither works on Amazon Linux 2023, build from source:
-> ```bash
-> sudo dnf install -y gcc make openssl-devel libevent-devel
-> cd /tmp
-> git clone https://github.com/coturn/coturn.git
-> cd coturn
-> ./configure --prefix=/usr/local
-> make && sudo make install
-> ```
+Verify:
+
+```bash
+which turnserver
+# Expected: /usr/local/bin/turnserver
+```
 
 ---
 
@@ -159,7 +152,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/turnserver -c /etc/turnserver.conf
+ExecStart=/usr/local/bin/turnserver -c /etc/turnserver.conf
 Restart=always
 RestartSec=5
 LimitNOFILE=65536
@@ -268,8 +261,9 @@ const ICE_SERVERS_JSON = JSON.stringify({
 Add coturn installation to the user data in `vidrom-cdk/lib/vidrom-cdk-stack.ts` so new instances are provisioned automatically. After the existing Node.js/systemd setup, add:
 
 ```typescript
-// Install and configure coturn (STUN/TURN)
-'dnf install -y coturn || (dnf install -y epel-release && dnf install -y coturn)',
+// Install and configure coturn (STUN/TURN) — build from source (not in AL2023 repos)
+'dnf install -y gcc make openssl-devel libevent-devel git',
+'cd /tmp && git clone https://github.com/coturn/coturn.git && cd coturn && ./configure --prefix=/usr/local && make && make install',
 
 'cat > /etc/turnserver.conf << \'TURNCONF\'',
 'listening-port=3478',
