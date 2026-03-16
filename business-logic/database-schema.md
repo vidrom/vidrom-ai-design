@@ -20,7 +20,6 @@
 | id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
 | name | VARCHAR(255) | NOT NULL | Building name |
 | address | VARCHAR(500) | NOT NULL | Building address |
-| door_code | VARCHAR(20) | NOT NULL | Access code for the building door |
 | door_opening_time | INTEGER | NOT NULL, DEFAULT 5 | Duration in seconds the door stays unlocked |
 | no_answer_timeout | INTEGER | NOT NULL, DEFAULT 30 | Seconds before an unanswered call auto-ends |
 | language | VARCHAR(10) | NOT NULL, DEFAULT 'en' | Building language preference |
@@ -82,6 +81,7 @@
 | name | VARCHAR(255) | NOT NULL | Intercom display name |
 | gate_id | VARCHAR(50) | | Physical gate identifier |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'disconnected', CHECK (status IN ('connected', 'disconnected')) | Connection status |
+| door_code | VARCHAR(20) | | Access code for the intercom door |
 | is_door_open | BOOLEAN | NOT NULL, DEFAULT false | Runtime door state |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Record creation timestamp |
 | updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Record last update timestamp |

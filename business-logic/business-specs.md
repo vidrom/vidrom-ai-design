@@ -18,7 +18,6 @@ Each building has:
 - id
 - name
 - address
-- door-code
 - manager
 - apartments
 - intercoms
@@ -53,6 +52,7 @@ Each intercom has:
 - id
 - building (which building it belongs to)
 - name / gate-id
+- door-code
 - status (connected / disconnected)
 - is-door-open (runtime state)
 
@@ -125,7 +125,7 @@ The system has global settings:
 - A call auto-ends after max-call-duration seconds
 - A call is marked as unanswered after no-answer-timeout seconds if no resident picks up
 - The door automatically re-locks after door-opening-time seconds
-- Access code validation opens the door only if the code matches the building's door-code
+- Access code validation opens the door only if the code matches the intercom's door-code
 - A resident with sleep-mode enabled does not receive incoming call notifications
 - Only one active call per apartment at a time
 - Every event in the system will be audited (see AuditLog entity for structure and event types)
