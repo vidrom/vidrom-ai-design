@@ -73,6 +73,18 @@ When multiple residents of the same apartment are notified:
 4. All other residents receive `{ type: 'call-taken' }`
 5. If **all** connected residents decline, the server relays `{ type: 'decline' }` to intercom
 
+### Call-Taken Notification Delivery
+
+When one device accepts, all **other** devices must stop ringing. The server sends `call-taken` through **every available channel**:
+
+| Channel | Target | Why |
+|---------|--------|-----|
+| WebSocket `{ type: 'call-taken' }` | All connected home WS clients for the apartment | Handles devices with an active WS session |
+| VoIP push (APNs) with `{ type: 'call-taken' }` | All iOS VoIP tokens for the apartment | **Required for iOS** — CallKit from a VoIP push runs without a WS connection; FCM data-only messages are unreliable in background on iOS |
+| FCM data message with `{ type: 'call-taken' }` | All FCM tokens for the apartment | Handles Android devices that may not have an active WS connection |
+
+> **Important:** Do **not** rely on FCM alone to dismiss CallKit on iOS. iOS throttles and may silently drop FCM data-only messages when the app is backgrounded. VoIP (PushKit) pushes are the only push type guaranteed immediate delivery on iOS.
+
 ---
 
 ## WebRTC Session Lifecycle
