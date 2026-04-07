@@ -63,11 +63,9 @@ The pending ring timeout in `connectionState.js` should update the DB when it fi
 - `voipService.js`: extract `callId` from VoIP push payload and pass it through.
 - `fcmService.js` / `callNotification.js`: extract `callId` from FCM data payload and pass it through.
 
-## Backward Compatibility
+## Message Contract Changes
 
-All message changes are **additive** — existing fields are preserved, `callId` is a new field. Old home apps that don't send `callId` on accept/decline/hangup will still work — the server treats a missing `callId` as "use the current active call for this apartment" (existing behavior).
-
-### Message Contract Changes
+Since nothing is in production yet, `callId` is **required** on all messages — no backward-compatibility fallback.
 
 ```jsonc
 // Server → Home (WS)
@@ -111,4 +109,3 @@ All message changes are **additive** — existing fields are preserved, `callId`
 - [ ] Ring expires → `calls` updated to `unanswered`, `audit_logs` has `call-unanswered`
 - [ ] Hangup → `calls` updated to `ended` with `ended_at`, `audit_logs` has `call-ended`
 - [ ] Home app sends `callId` in accept, decline, and hangup WS messages
-- [ ] Old home app without `callId` support still works (server falls back to active call lookup)
