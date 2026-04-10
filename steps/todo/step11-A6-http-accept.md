@@ -49,12 +49,36 @@ This means the call is reserved within milliseconds of the user tapping answer, 
 
 The existing WS `accept` handler in `wsHandler.js` should check whether the call was already HTTP-accepted by this same device. If so, skip the DB update (it's already done) and proceed directly to the WebRTC offer flow. If a different device HTTP-accepted, send `call-taken`.
 
+### 6d. Accept reservation timeout (server-side)
+
+The HTTP accept is a **reservation with expiry**, not a permanent claim. After accepting via HTTP, the device still needs to establish a WebSocket and send the WebRTC offer. If the OS suspends or kills the app before that happens (e.g., iOS background limits, Android Doze), the call would be stuck: accepted in DB, intercom waiting for an offer that never arrives, and all other residents already dismissed.
+
+**Server behavior:**
+
+1. When an HTTP accept succeeds (6a step 2), start a **10-second timer** keyed on `callId`.
+2. The timer is **cancelled** when the accepted device completes WS register and sends a WebRTC `offer` for this call.
+3. If the timer fires (device never connected):
+   - Revert `calls.status` back to `calling`:
+     ```sql
+     UPDATE calls SET status = 'calling', updated_at = NOW()
+     WHERE id = $1 AND status = 'accepted'
+     ```
+   - Clear `acceptedBy` and `acceptedWs` in the in-memory active call state.
+   - Re-ring all home devices: send `incoming-call` via WS to connected clients, and re-send VoIP/FCM push to all registered tokens for the apartment.
+   - Notify the intercom WS that the accept lapsed (type `accept-timeout`) so it keeps waiting.
+   - Insert `accept-timeout` into `audit_logs`.
+
+**Home app behavior:**
+
+- No change needed — if the app does come alive later, its WS register will find the call already reverted to `calling` (or ended), and the normal flow handles it.
+
 ## Files Touched
 
 | File | Change |
 |------|--------|
 | `vidrom-signaling-server/src/httpRoutes.js` | New `POST /api/home/calls/:callId/accept` endpoint |
-| `vidrom-signaling-server/src/wsHandler.js` | Reconcile WS accept with prior HTTP accept |
+| `vidrom-signaling-server/src/wsHandler.js` | Reconcile WS accept with prior HTTP accept; cancel accept timer on offer |
+| `vidrom-signaling-server/src/connectionState.js` | Accept reservation timer (start / cancel / fire) |
 | `vidrom-ai-home/useCallManager.js` | POST HTTP accept before WS connect on answer |
 | `vidrom-ai-home/config.js` | Add accept endpoint URL helper |
 
@@ -71,3 +95,9 @@ The existing WS `accept` handler in `wsHandler.js` should check whether the call
 - [ ] Home app on lock-screen: tap answer → HTTP accept fires within milliseconds, before WS connects
 - [ ] Home app proceeds to WS + WebRTC setup after successful HTTP accept
 - [ ] Home app shows "call taken" UI if HTTP accept returns `call-taken`
+- [ ] Accept reservation timeout: device doesn't connect within 10s → `calls.status` reverts to `calling`
+- [ ] Accept timeout clears `acceptedBy` in memory and re-rings all home devices (WS + push)
+- [ ] Accept timeout sends `accept-timeout` to intercom WS
+- [ ] Accept timeout inserts `accept-timeout` audit log
+- [ ] Timer is cancelled when accepted device sends WebRTC offer
+- [ ] After timeout, a different device can accept the call normally
