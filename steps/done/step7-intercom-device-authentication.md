@@ -30,7 +30,10 @@ Add authentication for the intercom Android SBC device using a device provisioni
 2. Generate a secret key for signing JWTs:
    ```javascript
    // In server config or .env file
-   const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is required');
+  }
    ```
 
 3. Create `auth.js` utility:

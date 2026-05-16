@@ -104,10 +104,10 @@ external-ip=52.203.117.37
 min-port=49152
 max-port=65535
 
-# Authentication (long-term credential mechanism, required for TURN)
-lt-cred-mech
+# Authentication (shared-secret TURN auth; issue short-lived creds at runtime)
+use-auth-secret
+static-auth-secret=<turn-shared-secret-from-secrets-manager>
 realm=vidrom.com
-user=vidrom:VidromTurn2026!
 
 # Fingerprint for STUN message integrity
 fingerprint
@@ -132,8 +132,8 @@ EOF
 |---------|---------|
 | `listening-port=3478` | Standard STUN/TURN port |
 | `external-ip=52.203.117.37` | Elastic IP — coturn tells clients to reach it here |
-| `lt-cred-mech` | Long-term credentials for TURN authentication |
-| `user=vidrom:VidromTurn2026!` | Username and password for TURN clients |
+| `use-auth-secret` | Shared-secret TURN auth for issuing short-lived credentials |
+| `static-auth-secret=<turn-shared-secret-from-secrets-manager>` | Shared secret loaded from a secret store, not committed source |
 | `realm=vidrom.com` | Authentication realm |
 | `fingerprint` | Adds STUN fingerprint to messages (improved compatibility) |
 | `min-port`/`max-port` | UDP port range for media relay allocations |
@@ -200,8 +200,8 @@ Use the [Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnectio
 1. Open https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/
 2. Add a TURN server:
    - URI: `turn:52.203.117.37:3478`
-   - Username: `vidrom`
-   - Password: `VidromTurn2026!`
+  - Username: `<short-lived-username from the signaling server>`
+  - Password: `<short-lived-credential from the signaling server>`
 3. Click **Gather candidates**
 4. Verify you see **relay** candidates in the output — this confirms TURN is working
 
@@ -226,8 +226,8 @@ export const ICE_SERVERS = {
     { urls: 'stun:52.203.117.37:3478' },
     {
       urls: 'turn:52.203.117.37:3478',
-      username: 'vidrom',
-      credential: 'VidromTurn2026!',
+      username: '<runtime-turn-username>',
+      credential: '<runtime-turn-credential>',
     },
   ],
 };
@@ -247,8 +247,8 @@ const ICE_SERVERS_JSON = JSON.stringify({
     { urls: 'stun:52.203.117.37:3478' },
     {
       urls: 'turn:52.203.117.37:3478',
-      username: 'vidrom',
-      credential: 'VidromTurn2026!',
+      username: '<runtime-turn-username>',
+      credential: '<runtime-turn-credential>',
     },
   ],
 });
@@ -271,9 +271,9 @@ Add coturn installation to the user data in `vidrom-cdk/lib/vidrom-cdk-stack.ts`
 'external-ip=52.203.117.37',
 'min-port=49152',
 'max-port=65535',
-'lt-cred-mech',
+'use-auth-secret',
 'realm=vidrom.com',
-'user=vidrom:VidromTurn2026!',
+'static-auth-secret=<turn-shared-secret-from-secrets-manager>',
 'fingerprint',
 'no-cli',
 'log-file=/var/log/turnserver.log',
@@ -307,8 +307,8 @@ To force TURN usage and verify the relay works:
    iceServers: [
      {
        urls: 'turn:52.203.117.37:3478',
-       username: 'vidrom',
-       credential: 'VidromTurn2026!',
+       username: '<runtime-turn-username>',
+       credential: '<runtime-turn-credential>',
      },
    ]
    ```

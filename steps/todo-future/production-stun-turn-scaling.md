@@ -5,7 +5,7 @@
 The current STUN/TURN setup (Step 11) runs a single coturn instance on the same `t3.micro` EC2 as the signaling server. This is fine for development and a handful of intercom systems, but will not hold up when going live with many buildings, intercom devices, and residents. Specific limitations:
 
 - **Shared resources** — coturn competes for CPU, memory, and bandwidth with the signaling server on one tiny instance
-- **Static credentials** — a single hardcoded username/password (`vidrom:VidromTurn2026!`) is baked into every app build; if leaked, anyone can abuse the TURN server
+- **Static credentials** — a single hardcoded username/password (`<turn-username>:<turn-password>`) is baked into every app build; if leaked, anyone can abuse the TURN server
 - **No redundancy** — if the EC2 instance goes down, all calls fail (no STUN fallback, no TURN relay)
 - **No horizontal scaling** — a single coturn instance can only relay so many concurrent media streams before saturating its bandwidth or CPU
 - **Single region** — all media relays through `us-east-1`, adding latency for users in other geographies
@@ -31,7 +31,7 @@ Move coturn to dedicated EC2 instance(s) sized for media relay workloads.
 
 ### 2. Dynamic (Short-Lived) TURN Credentials
 
-Replace the static `user=vidrom:VidromTurn2026!` with time-limited credentials generated per-session via the signaling server. coturn supports this natively with its `use-auth-secret` mode.
+Replace the static `user=<turn-username>:<turn-password>` with time-limited credentials generated per-session via the signaling server. coturn supports this natively with its `use-auth-secret` mode.
 
 **How it works:**
 1. Configure coturn with a shared secret instead of static users:
