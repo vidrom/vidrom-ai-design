@@ -140,7 +140,7 @@ Documentation of all screens and functionality in the previous Android intercom 
   - Injects `endCall()` into the WebView
   - Sends `PUT /calls/{callId}` with `status: 'ended'`
   - Navigates to WelcomeScreen
-- Handles `end-call` messages from WebView (remote hang-up)
+- Handles `hangup` messages from WebView (remote hang-up)
 
 **UI**: Background image (`callBg.png`), Vidrom logo, centered call icon in a large white circle (168px), call status text, large red end-call button (90px circle) at the bottom.
 

@@ -32,5 +32,11 @@ None — this can start immediately, but any code renames must ship as a coordin
 
 ## Verification
 
-- [ ] Design docs and source use the same message names
-- [ ] Any renamed messages preserve backward compatibility during rollout if needed
+- [x] Design docs and source use the same message names
+- [x] Any renamed messages preserve backward compatibility during rollout if needed
+
+## Outcome
+
+- The live code contract was treated as canonical for this step.
+- Design docs were aligned to `candidate`, `hangup`, `watch`, and `watch-end`.
+- No runtime rename rollout was introduced in this step.

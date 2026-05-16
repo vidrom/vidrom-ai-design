@@ -31,3 +31,13 @@
 - Apple Login
 - Full screen notification
 - Audio and video WebRTC calls
+
+## Signaling Contract
+
+The current WebSocket signaling contract is defined by the live implementation in
+the home app, intercom app, and signaling server.
+
+- Canonical message names: `ring`, `offer`, `answer`, `candidate`, `accept`, `decline`, `hangup`, `watch`, `watch-end`
+- The home app is the SDP offerer for both calls and watch sessions
+- The intercom app responds with the SDP answer
+- Older labels such as `ice-candidate`, `end-call`, `watch-start`, and `watch-stop` are not the live contract

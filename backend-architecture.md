@@ -142,17 +142,20 @@ Scoped CRUD on assigned buildings. See [management-portal.md](../management-port
 
 These stay on the EC2 signaling server and are NOT part of the REST API:
 
+The message names below are the canonical contract currently used by the home app,
+intercom app, and signaling server implementation.
+
 | Message | Direction | Description |
 |---------|-----------|-------------|
 | `ring` | Intercom → Server → Home (via push) | Initiate a call |
-| `offer` | Intercom → Server → Home | WebRTC SDP offer |
-| `answer` | Home → Server → Intercom | WebRTC SDP answer |
-| `ice-candidate` | Both → Server → Both | ICE candidate exchange |
+| `offer` | Home → Server → Intercom | WebRTC SDP offer |
+| `answer` | Intercom → Server → Home | WebRTC SDP answer |
+| `candidate` | Both → Server → Both | ICE candidate exchange |
 | `accept` | Home → Server → Intercom | Call accepted |
 | `decline` | Home → Server → Intercom | Call declined |
-| `end-call` | Either → Server → Other | Call ended |
-| `watch-start` | Home → Server → Intercom | Start live camera view |
-| `watch-stop` | Home → Server → Intercom | Stop live camera view |
+| `hangup` | Either → Server → Other | Call ended |
+| `watch` | Home → Server → Intercom | Start live camera view |
+| `watch-end` | Home → Server → Intercom | Stop live camera view |
 
 ---
 
