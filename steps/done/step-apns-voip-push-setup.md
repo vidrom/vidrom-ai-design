@@ -50,7 +50,7 @@ export APN_PRODUCTION="true"        # Use APNs production for App Store / TestFl
 
 After starting the server, check:
 ```bash
-curl http://signaling.vidrom.com:8080/debug/status | python3 -m json.tool
+curl https://signaling.vidrom.com/debug/status | python3 -m json.tool
 ```
 
 You should see `"apns": { "ready": true }`. If `false`, check the server logs for `[APNs]` messages.

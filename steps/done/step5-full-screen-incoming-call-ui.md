@@ -173,7 +173,7 @@ Upgrade the basic push notifications from Step 4 to display a full-screen incomi
          await AsyncStorage.setItem('pendingCallAction', 'accept');
        } else if (detail.pressAction?.id === 'decline') {
          // Send decline via HTTP to server (WebSocket not available in background)
-         await fetch(`http://${SERVER_IP}:${SERVER_PORT}/decline`, { method: 'POST' });
+         await fetch('https://signaling.vidrom.com/decline', { method: 'POST' });
        }
        await notifee.cancelAllNotifications();
      }

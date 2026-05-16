@@ -47,9 +47,9 @@ The review surfaced six main classes of improvement:
 
 ### 3. Production transport is not hardened
 
-- The apps still target `http://` and `ws://` endpoints.
-- The iOS app explicitly allows insecure HTTP loads for the signaling host.
-- CDK outputs and ops scripts still advertise raw `ws://` connectivity.
+- Resolved by Step 12-A3: production defaults now target `https://` and `wss://` endpoints.
+- Resolved by Step 12-A3: the home app no longer carries the production ATS insecure-load exception.
+- Resolved by Step 12-A3: CDK outputs and ops scripts now advertise secure signaling endpoints.
 
 ### 4. Infrastructure is too permissive
 

@@ -215,9 +215,9 @@ Edit `vidrom-ai-home/config.js`:
 // ---- Shared configuration constants ----
 
 export const SERVER_IP = 'signaling.vidrom.com';
-export const SERVER_PORT = '8080';
-export const SERVER_HTTP = `http://${SERVER_IP}:${SERVER_PORT}`;
-export const SERVER_WS = `ws://${SERVER_IP}:${SERVER_PORT}`;
+export const SERVER_PORT = '';
+export const SERVER_HTTP = `https://${SERVER_IP}`;
+export const SERVER_WS = `wss://${SERVER_IP}`;
 
 export const ICE_SERVERS = {
   iceServers: [

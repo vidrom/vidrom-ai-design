@@ -143,7 +143,7 @@ module.exports = {
    }
    ```
 
-2. The admin portal will be accessible at: `http://<SERVER_IP>:8080/admin`
+2. The admin portal will be accessible at: `https://portal.vidrom.com/admin`
 
 ---
 
@@ -255,11 +255,11 @@ res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
 ## Step 9.7 — Update CDK / Deployment
 
-No infrastructure changes are needed — the admin page is served by the same HTTP server on port 8080. Just ensure `admin.html` is included in the deployment:
+The current deployment path serves the admin portal from the portal distribution at `https://portal.vidrom.com/admin`, with API traffic routed separately to the backend. If reusing this archived step, make sure the static portal asset is deployed through the current portal pipeline instead of assuming direct HTTP serving from the signaling process.
 
-1. Update `deploy-server.sh` to copy `admin.html` alongside `server.js`:
-   ```bash
-   scp admin.html $SERVER_HOST:/opt/vidrom-signaling/
+1. Ensure the portal asset is included in the current deployment flow for `vidrom-signaling-server/portals` rather than copying `admin.html` directly onto the EC2 instance.
+  ```bash
+  npm run cdk -- deploy
    ```
 
 ---
@@ -267,7 +267,7 @@ No infrastructure changes are needed — the admin page is served by the same HT
 ## Step 9.8 — Testing Checklist
 
 1. **Google Sign-In:**
-   - Navigate to `http://<SERVER_IP>:8080/admin`
+  - Navigate to `https://portal.vidrom.com/admin`
    - Click Sign In → Google login popup appears
    - Sign in with `wwguyww@gmail.com` → access granted
    - Sign in with `ronenwes@gmail.com` → access granted

@@ -110,7 +110,7 @@ The server exposes `GET /debug/status` (`httpRoutes.js` lines 94-107) which show
 - Pending ring state
 
 ```bash
-curl http://signaling.vidrom.com:8080/debug/status
+curl https://signaling.vidrom.com/debug/status
 ```
 
 ---
@@ -121,7 +121,7 @@ curl http://signaling.vidrom.com:8080/debug/status
 
 **Check the server has tokens:**
 ```bash
-curl http://signaling.vidrom.com:8080/debug/status | python3 -m json.tool
+curl https://signaling.vidrom.com/debug/status | python3 -m json.tool
 ```
 
 Expected response should show both `fcmTokens.home` and `voipTokens.home` are non-null.

@@ -43,4 +43,16 @@ Recommended after A2 so the secure endpoint configuration lands on top of the va
 
 - [ ] Mobile apps connect successfully over HTTPS and WSS
 - [ ] iOS no longer needs insecure transport exceptions for the production host
-- [ ] Docs and scripts show secure endpoints only
+- [x] Docs and scripts show secure endpoints only
+
+## Current Status
+
+- Repo-side implementation is complete.
+- Live infrastructure rollout and end-to-end verification are blocked pending AWS account unblocking.
+
+## Implementation Notes
+
+- Production client defaults now target `https://signaling.vidrom.com` and `wss://signaling.vidrom.com`.
+- Local and temporary non-production endpoint testing should use `EXPO_PUBLIC_SIGNALING_HTTP_URL` and `EXPO_PUBLIC_SIGNALING_WS_URL` when starting Metro instead of editing app source.
+- CDK implementation uses an ACM certificate plus internet-facing ALB for TLS termination in front of the existing Node backend on port `8080`.
+- AWS deploy is pending because the account is currently blocked; infra changes have been implemented and validated with `npm run build` and `cdk synth` in `vidrom-cdk`.

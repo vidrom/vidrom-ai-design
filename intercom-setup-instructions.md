@@ -6,8 +6,8 @@ This guide explains how to create a new intercom system entry on the server and 
 
 ## Prerequisites
 
-- The Vidrom signaling server is running and accessible (default port `8080`)
-- Access to the admin portal at `http://admin.vidrom.com:8080/admin` (requires an authorized Google account)
+- The Vidrom signaling server is running and reachable at `https://signaling.vidrom.com`
+- Access to the admin portal at `https://portal.vidrom.com/admin` (requires an authorized Google account)
 - The intercom Android app (vidrom-ai-intercom) is installed on the SBC device
 - The SBC device has network connectivity to the signaling server
 
@@ -15,7 +15,7 @@ This guide explains how to create a new intercom system entry on the server and 
 
 ## Step 1 — Create a Device Entry via Admin Portal
 
-1. Open the admin portal: **http://admin.vidrom.com:8080/admin**
+1. Open the admin portal: **https://portal.vidrom.com/admin**
 2. Sign in with an authorized Google account (`wwguyww@gmail.com` or `ronenwes@gmail.com`)
 3. In the **"Create New Device"** section:
    - Enter the **Building ID** (e.g., `building-42`)
@@ -64,7 +64,7 @@ After provisioning, confirm the device is working:
 
 If a device is compromised, decommissioned, or needs to be re-provisioned:
 
-1. Open the admin portal: **http://admin.vidrom.com:8080/admin**
+1. Open the admin portal: **https://portal.vidrom.com/admin**
 2. Sign in with an authorized Google account
 3. Find the device in the **Devices** table
 4. Click the **"Revoke"** button and confirm
@@ -85,7 +85,7 @@ After revocation:
 
 | Problem                              | Solution                                                                                     |
 | ------------------------------------ | -------------------------------------------------------------------------------------------- |
-| "Could not connect to server"        | Verify the server IP/port in `config.js` matches the running server. Check network connectivity. |
+| "Could not connect to server"        | Verify the signaling URL in `config.js` or the `EXPO_PUBLIC_SIGNALING_*` overrides matches the running server. Check network connectivity. |
 | "Invalid or expired code"            | The code was already used or doesn't exist. Create a new device entry (Step 1).               |
 | Setup screen doesn't appear          | The device already has a stored token. Clear app data to reset, or the device is already provisioned. |
 | "Device revoked or not found"        | The device was revoked by an admin. Re-provision with a new code (see Revoking section above). |
