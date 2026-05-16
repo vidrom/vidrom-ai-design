@@ -26,10 +26,16 @@ Best done after A2, A3, and B1 so the docs describe the final config and deploym
 |------|--------|
 | `vidrom-cdk/README.md` | Replace scaffold docs with the real deploy and rollback workflow |
 | repo-specific setup docs or runbooks | Document actual config prerequisites and workflows |
-| mobile build scripts | Capture any reproducibility fixes found during the audit |
+| tracked mobile config/plugins | Capture the home iOS Podfile reproducibility fix in tracked source |
 
 ## Verification
 
-- [ ] A new developer can understand the deploy model from the checked-in docs
-- [ ] Native mobile builds are reproducible from tracked source and scripts
-- [ ] No critical build workaround depends on ignored generated folders
+- [x] A new developer can understand the deploy model from the checked-in docs
+- [x] Native mobile builds are reproducible from tracked source and scripts
+- [x] No critical build workaround depends on ignored generated folders
+
+## Outcome
+
+- Replaced the generic CDK README and empty signaling README with actual deploy, config, secret, and rollback documentation.
+- Added dedicated README files for the home and intercom apps that document ports, run commands, env vars, and the generated-native workflow.
+- Moved the home app's required iOS Podfile workarounds into a tracked Expo config plugin and added an automated test for the Podfile transform so the ignored native folders remain reproducible.

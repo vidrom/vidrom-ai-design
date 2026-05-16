@@ -42,6 +42,12 @@ At minimum, add focused tests around config resolution and call state helpers wh
 
 ## Verification
 
-- [ ] Critical server state transitions are covered by automated tests
-- [ ] CDK tests assert real stack behavior, not scaffolding defaults
-- [ ] CI or local test scripts can run the new coverage predictably
+- [x] Critical server state transitions are covered by automated tests
+- [x] CDK tests assert real stack behavior, not scaffolding defaults
+- [x] CI or local test scripts can run the new coverage predictably
+
+## Outcome
+
+- Added a reusable signaling server test harness and critical wsHandler flow coverage.
+- Replaced the placeholder CDK test with real assertions for the current stack and DB security posture.
+- Added small mobile helper tests for config normalization and ICE config freshness logic, with package-level `npm test` scripts in both apps.
