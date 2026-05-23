@@ -32,6 +32,7 @@ Step 13 is now split into smaller sub-steps so the hardening can land incrementa
 | 4 | [step13-A4-authenticated-call-actions.md](step13-A4-authenticated-call-actions.md) | Harden delivery ack and HTTP accept ownership checks | Depends on A1 |
 | 5 | [step13-B1-home-bearer-auth-transport.md](step13-B1-home-bearer-auth-transport.md) | Add bearer auth transport in the home app | Best landed alongside A2-A4 |
 | 6 | [step13-B2-auth-regression-tests-and-cleanup.md](step13-B2-auth-regression-tests-and-cleanup.md) | Add auth regression coverage and remove compatibility fallbacks | Best after A2-A4 and B1 |
+| 7 | [step13-final-production-cutover.md](step13-final-production-cutover.md) | Finish production migration, deploy, and live verification after AWS unlock | Run only after AWS access is restored |
 
 ## Execution Notes
 
@@ -42,6 +43,7 @@ The intended sequence is:
 3. update the home app to attach Firebase bearer tokens
 4. lock in behavior with regression coverage
 5. remove compatibility paths that still accept caller-owned identity fields
+6. after AWS is available again, apply the `firebase_uid` migration and ship the live cutover
 
 ## Exit Criteria
 

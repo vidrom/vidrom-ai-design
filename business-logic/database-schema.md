@@ -58,6 +58,7 @@
 |--------|------|-------------|-------------|
 | id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
 | email | VARCHAR(255) | NOT NULL, UNIQUE | User email |
+| firebase_uid | VARCHAR(255) | UNIQUE, NULLABLE | Persisted Firebase Auth UID for server-trusted resident identity |
 | name | VARCHAR(255) | NOT NULL | User full name |
 | role | VARCHAR(20) | NOT NULL, CHECK (role IN ('admin', 'manager', 'resident')) | User role |
 | push_notification_token | VARCHAR(500) | | FCM/APNs push token (for residents) |
@@ -69,6 +70,7 @@
 **Indexes:**
 - `idx_users_email` on `email`
 - `idx_users_role` on `role`
+- `uq_users_firebase_uid` UNIQUE on `firebase_uid` WHERE `firebase_uid IS NOT NULL`
 
 ---
 
