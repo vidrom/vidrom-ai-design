@@ -47,7 +47,7 @@ Only continue if the Step 14 auth tests are still green.
 
 ### 2. Apply the DB migration
 
-Apply the Step 14 SQL migration created during [step14-A1-operator-subject-foundation.md](step14-A1-operator-subject-foundation.md).
+Apply the Step 14 SQL migration created during [step14-A1-operator-subject-foundation.md](../done/step14-A1-operator-subject-foundation.md).
 
 Expected post-migration state:
 

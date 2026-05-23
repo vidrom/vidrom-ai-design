@@ -20,18 +20,24 @@ After Step 13:
 4. call ack and HTTP accept cannot be forged for unrelated calls
 5. the home app sends bearer auth consistently on resident HTTP requests
 
+## Current Status
+
+Local implementation is complete.
+
+The only remaining Step 13 work is the AWS-blocked production cutover in [step13-final-production-cutover.md](step13-final-production-cutover.md).
+
 ## Implementation Order
 
 Step 13 is now split into smaller sub-steps so the hardening can land incrementally.
 
 | Order | File | Focus | Notes |
 |---|---|---|---|
-| 1 | [step13-A1-resident-auth-foundation.md](step13-A1-resident-auth-foundation.md) | Add resident auth middleware and server-trusted resident context | Foundation for every later step |
-| 2 | [step13-A2-authenticated-apartment-resolution.md](step13-A2-authenticated-apartment-resolution.md) | Replace body-driven apartment resolution with authenticated lookup | Depends on A1 |
-| 3 | [step13-A3-authenticated-token-registration.md](step13-A3-authenticated-token-registration.md) | Harden FCM and VoIP token registration ownership | Depends on A1 |
-| 4 | [step13-A4-authenticated-call-actions.md](step13-A4-authenticated-call-actions.md) | Harden delivery ack and HTTP accept ownership checks | Depends on A1 |
-| 5 | [step13-B1-home-bearer-auth-transport.md](step13-B1-home-bearer-auth-transport.md) | Add bearer auth transport in the home app | Best landed alongside A2-A4 |
-| 6 | [step13-B2-auth-regression-tests-and-cleanup.md](step13-B2-auth-regression-tests-and-cleanup.md) | Add auth regression coverage and remove compatibility fallbacks | Best after A2-A4 and B1 |
+| 1 | [step13-A1-resident-auth-foundation.md](../done/step13-A1-resident-auth-foundation.md) | Add resident auth middleware and server-trusted resident context | Completed locally |
+| 2 | [step13-A2-authenticated-apartment-resolution.md](../done/step13-A2-authenticated-apartment-resolution.md) | Replace body-driven apartment resolution with authenticated lookup | Completed locally |
+| 3 | [step13-A3-authenticated-token-registration.md](../done/step13-A3-authenticated-token-registration.md) | Harden FCM and VoIP token registration ownership | Completed locally |
+| 4 | [step13-A4-authenticated-call-actions.md](../done/step13-A4-authenticated-call-actions.md) | Harden delivery ack and HTTP accept ownership checks | Completed locally |
+| 5 | [step13-B1-home-bearer-auth-transport.md](../done/step13-B1-home-bearer-auth-transport.md) | Add bearer auth transport in the home app | Completed locally |
+| 6 | [step13-B2-auth-regression-tests-and-cleanup.md](../done/step13-B2-auth-regression-tests-and-cleanup.md) | Add auth regression coverage and remove compatibility fallbacks | Completed locally |
 | 7 | [step13-final-production-cutover.md](step13-final-production-cutover.md) | Finish production migration, deploy, and live verification after AWS unlock | Run only after AWS access is restored |
 
 ## Execution Notes
@@ -53,3 +59,4 @@ The intended sequence is:
 - [ ] call ack and HTTP accept reject unauthorized apartment access
 - [ ] home app sends authenticated resident HTTP requests consistently
 - [ ] server tests cover auth and ownership boundaries
+- [ ] production migration, deploy, and live verification complete after AWS unlock

@@ -56,6 +56,12 @@ After Step 14:
 4. operator auth cannot be rebound by changing only the email field in a token or DB row
 5. portal auth regressions are covered by tests
 
+## Current Status
+
+Local implementation is complete.
+
+The only remaining Step 14 work is the AWS-blocked production cutover in [step14-final-production-cutover.md](step14-final-production-cutover.md).
+
 ## Proposed Data Model Change
 
 Add a nullable Google subject column on `users`, for example:
@@ -76,10 +82,10 @@ Step 14 is split so the operator auth migration can land incrementally.
 
 | Order | File | Focus | Notes |
 |---|---|---|---|
-| 1 | [step14-A1-operator-subject-foundation.md](step14-A1-operator-subject-foundation.md) | Add persisted Google subject and subject-first auth resolution | Foundation for every later step |
-| 2 | [step14-A2-admin-auth-hardening.md](step14-A2-admin-auth-hardening.md) | Harden `/api/admin/*` auth binding | Depends on A1 |
-| 3 | [step14-A3-management-auth-hardening.md](step14-A3-management-auth-hardening.md) | Harden `/api/management/*` auth binding and keep building scope correct | Depends on A1 |
-| 4 | [step14-B1-portal-auth-regression-tests-and-cleanup.md](step14-B1-portal-auth-regression-tests-and-cleanup.md) | Add regression tests and remove email-primary leftovers | Best after A2 and A3 |
+| 1 | [step14-A1-operator-subject-foundation.md](../done/step14-A1-operator-subject-foundation.md) | Add persisted Google subject and subject-first auth resolution | Completed locally |
+| 2 | [step14-A2-admin-auth-hardening.md](../done/step14-A2-admin-auth-hardening.md) | Harden `/api/admin/*` auth binding | Completed locally |
+| 3 | [step14-A3-management-auth-hardening.md](../done/step14-A3-management-auth-hardening.md) | Harden `/api/management/*` auth binding and keep building scope correct | Completed locally |
+| 4 | [step14-B1-portal-auth-regression-tests-and-cleanup.md](../done/step14-B1-portal-auth-regression-tests-and-cleanup.md) | Add regression tests and remove email-primary leftovers | Completed locally |
 | 5 | [step14-final-production-cutover.md](step14-final-production-cutover.md) | Finish the operator subject migration, deploy the Lambda stack, and verify live portal auth after AWS unlock | Run only after AWS access is restored |
 
 ## Files Likely Touched

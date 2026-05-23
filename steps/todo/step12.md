@@ -29,6 +29,26 @@ After Step 12:
 
 ---
 
+## Current Status
+
+Most Step 12 repo-side work is complete.
+
+Completed locally:
+
+1. signaling correctness hardening
+2. secret-management cleanup and runtime validation
+3. HTTPS/WSS migration implementation
+4. signaling contract alignment docs
+5. critical server test coverage
+6. repo docs and reproducibility cleanup
+
+Still remaining:
+
+1. [step12-A3-final-production-cutover.md](step12-A3-final-production-cutover.md) for the AWS-blocked secure transport rollout and live verification
+2. [step12-B1-db-and-turn-hardening.md](step12-B1-db-and-turn-hardening.md) for post-deploy DB/TURN verification before it can move to `done`
+
+---
+
 ## Findings Summary
 
 The review surfaced six main classes of improvement:
@@ -92,13 +112,14 @@ Step 12 is now split into concrete sub-step docs so the work can move in smaller
 
 | Order | File | Focus | Notes |
 |---|---|---|---|
-| 1 | [step12-A1-signaling-correctness.md](step12-A1-signaling-correctness.md) | Fix the ring-path correctness bug | Highest priority, first landing item |
-| 2 | [step12-A2-secret-management.md](step12-A2-secret-management.md) | Remove hardcoded secrets and validate config at startup | Foundation for later infra work |
-| 3 | [step12-A3-https-wss-migration.md](step12-A3-https-wss-migration.md) | Move production traffic to HTTPS and WSS | Depends on stable config paths |
-| 4 | [step12-B1-db-and-turn-hardening.md](step12-B1-db-and-turn-hardening.md) | Tighten DB exposure and TURN credentials | Best after A2 |
-| 5 | [step12-B2-contract-alignment.md](step12-B2-contract-alignment.md) | Align docs with the live signaling contract | Can start immediately |
-| 6 | [step12-C1-server-tests.md](step12-C1-server-tests.md) | Add critical server, infra, and targeted mobile tests | Starts with A1 regression coverage |
-| 7 | [step12-C2-repo-docs-and-reproducibility.md](step12-C2-repo-docs-and-reproducibility.md) | Rewrite docs and verify build reproducibility | Best after config and infra changes settle |
+| 1 | [step12-A1-signaling-correctness.md](../done/step12-A1-signaling-correctness.md) | Fix the ring-path correctness bug | Completed |
+| 2 | [step12-A2-secret-management.md](../done/step12-A2-secret-management.md) | Remove hardcoded secrets and validate config at startup | Completed |
+| 3 | [step12-A3-https-wss-migration.md](../done/step12-A3-https-wss-migration.md) | Move production traffic to HTTPS and WSS | Completed locally |
+| 4 | [step12-A3-final-production-cutover.md](step12-A3-final-production-cutover.md) | Deploy the secure signaling edge and verify live HTTPS/WSS traffic after AWS unlock | Run only after AWS access is restored |
+| 5 | [step12-B1-db-and-turn-hardening.md](step12-B1-db-and-turn-hardening.md) | Tighten DB exposure and TURN credentials | Best after A2 |
+| 6 | [step12-B2-contract-alignment.md](../done/step12-B2-contract-alignment.md) | Align docs with the live signaling contract | Completed |
+| 7 | [step12-C1-server-tests.md](../done/step12-C1-server-tests.md) | Add critical server, infra, and targeted mobile tests | Completed |
+| 8 | [step12-C2-repo-docs-and-reproducibility.md](../done/step12-C2-repo-docs-and-reproducibility.md) | Rewrite docs and verify build reproducibility | Completed |
 
 ## Execution Notes
 
