@@ -8,7 +8,7 @@ The Admin Portal is a web-based interface for **system administrators** who have
 
 - **Role**: `admin` (from users table)
 - **Authentication**: Google OAuth (Google Identity Services)
-- **Authorization**: Server-side verification — user must exist in the `users` table with `role = 'admin'`
+- **Authorization**: Server-side verification — user must exist in the `users` table with `role = 'admin'`, resolved by persisted `users.google_subject` first and only falling back once to verified email for subject backfill
 - **URL**: `https://<server>/admin`
 
 ## Capabilities
@@ -125,7 +125,7 @@ All Admin Portal API calls use the `/api/admin/*` prefix.
 - **Served from**: Signaling server at route `/admin` (current); S3 + CloudFront (future)
 - **Backend**: REST API on signaling server (current); API Gateway + Lambda (future)
 - **Auth flow**: Google Identity Services → ID token → sent as `Authorization: Bearer <token>` on every API call
-- **Server-side auth**: `verifyAdminToken()` verifies Google ID token and checks `role = 'admin'` in users table
+- **Server-side auth**: `verifyAdminToken()` verifies the Google ID token, prefers persisted `users.google_subject = payload.sub`, and only uses verified email as a one-time migration fallback before enforcing `role = 'admin'`
 - **No client-side email whitelist** — authorization is fully server-side based on the users table role field
 
 See [backend-architecture.md](backend-architecture.md) for the full architecture overview.

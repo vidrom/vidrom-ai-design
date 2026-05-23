@@ -70,45 +70,17 @@ Recommended shape:
 
 This should mirror the resident-side migration pattern used for `firebase_uid` in Step 13.
 
-## Implementation Plan
+## Implementation Order
 
-### A1. Persist Google subject on users
+Step 14 is split so the operator auth migration can land incrementally.
 
-Add a DB migration that:
-
-1. adds nullable `users.google_subject`
-2. adds a unique partial index for non-null values
-
-Update the schema docs accordingly.
-
-### A2. Harden Lambda auth lookup
-
-Update `vidrom-signaling-server/lambda/adminAuth.js` so that:
-
-1. Google ID tokens are still verified with `google-auth-library`
-2. admin and management users resolve by `google_subject = payload.sub` first
-3. verified email fallback is only used when the DB row has no stored subject yet
-4. successful fallback writes the Google subject back to the matching user row
-5. conflicting existing subject bindings are rejected instead of overwritten
-
-### A3. Preserve authorization semantics
-
-Keep the current role and scoping rules intact:
-
-1. admin still requires `role = 'admin'`
-2. management still requires `role = 'manager'`
-3. management scope still loads building IDs from `building_managers`
-4. route authorization behavior should not widen during the auth migration
-
-### A4. Add regression coverage
-
-Add tests that prove:
-
-1. valid Google token + matching stored subject authenticates
-2. valid token + no stored subject falls back by verified email and backfills the subject
-3. valid token + conflicting stored subject is rejected
-4. admin routes still require admin role
-5. management routes still require manager role and assigned building scope
+| Order | File | Focus | Notes |
+|---|---|---|---|
+| 1 | [step14-A1-operator-subject-foundation.md](step14-A1-operator-subject-foundation.md) | Add persisted Google subject and subject-first auth resolution | Foundation for every later step |
+| 2 | [step14-A2-admin-auth-hardening.md](step14-A2-admin-auth-hardening.md) | Harden `/api/admin/*` auth binding | Depends on A1 |
+| 3 | [step14-A3-management-auth-hardening.md](step14-A3-management-auth-hardening.md) | Harden `/api/management/*` auth binding and keep building scope correct | Depends on A1 |
+| 4 | [step14-B1-portal-auth-regression-tests-and-cleanup.md](step14-B1-portal-auth-regression-tests-and-cleanup.md) | Add regression tests and remove email-primary leftovers | Best after A2 and A3 |
+| 5 | [step14-final-production-cutover.md](step14-final-production-cutover.md) | Finish the operator subject migration, deploy the Lambda stack, and verify live portal auth after AWS unlock | Run only after AWS access is restored |
 
 ## Files Likely Touched
 
@@ -146,6 +118,7 @@ Add tests that prove:
 - [ ] a stable Google subject is persisted on operator user rows
 - [ ] route authorization and management building scope remain correct
 - [ ] production cutover plan is documented before shipping
+- [ ] production deploy and live portal verification complete after AWS unlock
 
 ## Notes
 
@@ -153,3 +126,13 @@ This should be treated as the operator-side counterpart to Step 13.
 
 Step 13 hardened resident auth.
 Step 14 should harden admin and management auth to the same standard.
+
+## Execution Notes
+
+The intended sequence is:
+
+1. persist a stable Google subject on operator users
+2. harden admin auth to resolve by subject first
+3. harden management auth to resolve by subject first while preserving building scoping
+4. lock in the behavior with regression tests and doc cleanup
+5. run the production cutover plan in [step14-final-production-cutover.md](step14-final-production-cutover.md) once AWS access is restored

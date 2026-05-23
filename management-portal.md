@@ -8,7 +8,7 @@ The Management Portal is a web-based interface for **building managers** who can
 
 - **Role**: `manager` (from users table)
 - **Authentication**: Google OAuth (Google Identity Services)
-- **Authorization**: Server-side verification — user must exist in the `users` table with `role = 'manager'`, and every query is scoped to buildings linked via the `building_managers` junction table
+- **Authorization**: Server-side verification — user must exist in the `users` table with `role = 'manager'`, resolved by persisted `users.google_subject` first and only falling back once to verified email for subject backfill, and every query is scoped to buildings linked via the `building_managers` junction table
 - **URL**: `https://<server>/management`
 
 ## Scoping Rule
@@ -110,7 +110,7 @@ All Management Portal API calls use the `/api/management/*` prefix. Every endpoi
 
 Every `/api/management/*` handler must:
 
-1. Extract the authenticated user's ID from the verified Google token + users table
+1. Extract the authenticated user's ID from the verified Google token and persisted server-side operator binding
 2. Query `building_managers` to get the list of `building_id` values for this user
 3. Filter all database queries to only include rows matching those building IDs
 4. Return `403 Forbidden` if the manager tries to access a resource outside their assigned buildings
@@ -144,7 +144,7 @@ const buildingIds = managerBuildings.map(r => r.building_id);
 - **Served from**: Signaling server at route `/management` (current); S3 + CloudFront (future)
 - **Backend**: REST API on signaling server (current); API Gateway + Lambda (future)
 - **Auth flow**: Google Identity Services → ID token → sent as `Authorization: Bearer <token>` on every API call
-- **Server-side auth**: `verifyManagementToken()` verifies Google ID token and checks `role = 'manager'` in users table, then loads assigned buildings from `building_managers`
+- **Server-side auth**: `verifyManagementToken()` verifies the Google ID token, prefers persisted `users.google_subject = payload.sub`, only uses verified email as a one-time migration fallback, then loads assigned buildings from `building_managers`
 - **No client-side email whitelist** — authorization is fully server-side based on the users table role field and building_managers assignments
 
 See [backend-architecture.md](backend-architecture.md) for the full architecture overview.
