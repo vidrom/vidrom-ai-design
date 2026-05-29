@@ -56,3 +56,49 @@ A2 should land first so secret storage and runtime TURN config are already in pl
 5. Place a real intercom-to-home call and verify call setup still succeeds.
 6. Re-test from a restrictive network path where TURN relay may be required and confirm media still connects.
 7. If all checks pass, move this step to `done/` and mark the verification items complete.
+
+## Operator-Run AWS Verification Commands
+
+Operational safety rule: the assistant may run local-only validation, but the operator runs every AWS command that changes the account. The commands below are read-only unless explicitly noted.
+
+Find the deployed RDS instance and confirm it is not publicly accessible:
+
+```sh
+DB_INSTANCE_ID="$(aws cloudformation describe-stack-resources \
+	--stack-name VidromSignalingStack \
+	--region us-east-1 \
+	--query "StackResources[?ResourceType=='AWS::RDS::DBInstance'].PhysicalResourceId | [0]" \
+	--output text)"
+
+aws rds describe-db-instances \
+	--db-instance-identifier "$DB_INSTANCE_ID" \
+	--region us-east-1 \
+	--query 'DBInstances[0].{DBInstanceIdentifier:DBInstanceIdentifier,PubliclyAccessible:PubliclyAccessible,DBSubnetGroup:DBSubnetGroup.DBSubnetGroupName,VpcSecurityGroups:VpcSecurityGroups[*].VpcSecurityGroupId}'
+```
+
+Find the database security group and confirm PostgreSQL ingress is security-group based only:
+
+```sh
+DB_SG_ID="$(aws cloudformation describe-stack-resources \
+	--stack-name VidromSignalingStack \
+	--region us-east-1 \
+	--query "StackResources[?ResourceType=='AWS::EC2::SecurityGroup' && contains(LogicalResourceId, 'DatabaseSg')].PhysicalResourceId | [0]" \
+	--output text)"
+
+aws ec2 describe-security-groups \
+	--group-ids "$DB_SG_ID" \
+	--region us-east-1 \
+	--query 'SecurityGroups[0].IpPermissions[?FromPort==`5432`]'
+```
+
+Verify runtime RTC config from production with a valid resident JWT:
+
+```sh
+VIDROM_AUTH_TOKEN='<resident-jwt>'
+curl -fsS https://signaling.vidrom.com/api/rtc-config \
+	-H "Authorization: Bearer $VIDROM_AUTH_TOKEN"
+```
+
+The response should include `ttlSeconds`, `expiresAt`, and a TURN `username` containing an epoch expiry prefix, for example `<epoch>:home`, instead of a static username.
+
+If the runtime secret needs TURN shared-secret rotation later, the operator should run the Secrets Manager update and then restart/refresh the dependent services through SSM; do not rotate it from an assistant-run terminal.
