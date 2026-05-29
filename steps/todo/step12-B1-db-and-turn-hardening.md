@@ -43,9 +43,52 @@ A2 should land first so secret storage and runtime TURN config are already in pl
 
 ## Verification
 
-- [ ] DB is no longer broadly reachable from the public internet
-- [ ] TURN credentials rotate or expire automatically
+- [x] DB is no longer broadly reachable from the public internet
+- [x] TURN credentials rotate or expire automatically
 - [ ] Clients can still establish calls in restrictive network conditions
+
+## AWS Production Verification — 2026-05-29
+
+Read-only production checks after the Step 12-A3 AWS cutover verified the deployed hardening state:
+
+### RDS network exposure
+
+The CloudFormation-managed RDS instance is private:
+
+- DB instance: `vidromsignalingstack-vidromdatabasef96bc19c-lltmtpczyz75`
+- `PubliclyAccessible`: `false`
+- DB security group: `sg-0ef53703f3f79b39e`
+- PostgreSQL ingress on port 5432 is security-group based only:
+	- signaling server SG `sg-0a667159c03078fdc`
+	- portal API Lambda SG `sg-0169c87aa9fa7b72c`
+	- no IPv4 or IPv6 CIDR ingress rules
+
+### Runtime TURN config
+
+Production `/api/rtc-config` was called through `https://signaling.vidrom.com` using a short-lived intercom JWT generated from the production runtime secret. Sensitive token and TURN credential values were not printed.
+
+Redacted response summary:
+
+```json
+{
+	"statusCode": 200,
+	"ttlSeconds": 600,
+	"hasTurn": true,
+	"usernameShape": "EPOCH:intercom",
+	"expiryIsEpoch": true,
+	"credentialRedacted": true
+}
+```
+
+This confirms the server is issuing expiring TURN credentials with an epoch-prefixed username instead of static source credentials.
+
+### Deploy bucket IAM cleanup
+
+The manual inline EC2 role policy `VidromDeployBucketAccess` was replaced with the CDK-managed `deployBucket.grantRead(role)` policy in `vidrom-cdk/lib/vidrom-cdk-stack.ts`, deployed successfully, and validated from EC2 with an S3 read probe. The redundant manual inline policy was removed; only the CloudFormation-managed default role policy remains.
+
+### Remaining verification
+
+The only Step 12-B1 item still requiring manual/device validation is media behavior from a restrictive network where TURN relay is actually used.
 
 ## Post-Deploy Verification Checklist
 
