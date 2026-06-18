@@ -21,7 +21,19 @@ After Step 15:
 
 Local implementation is complete.
 
-The remaining Step 15 work is production rollout and live verification after AWS access is restored, tracked in [step15-final-production-cutover.md](step15-final-production-cutover.md).
+Production rollout and live verification are complete.
+
+Verified in production:
+
+1. portal pages load with the Step 15 CSP-oriented external script structure intact
+2. portal API responses include the hardened CORS and security headers
+3. API Gateway and Lambda-side throttling are deployed for portal endpoints
+4. `vidrom-signaling.service` runs under the hardened `vidrom` systemd profile
+5. runtime secret material is recreated under `/run/vidrom-signaling`
+6. `vidrom-secret-refresh.timer` is enabled and functioning
+7. the EC2 deploy path was re-run successfully after a missing `run.sh` file was detected during refresh verification, and production health recovered cleanly
+
+Step 15 is complete. The production closeout record is in [step15-final-production-cutover.md](../done/step15-final-production-cutover.md).
 
 ## Implementation Order
 
@@ -33,7 +45,7 @@ The remaining Step 15 work is production rollout and live verification after AWS
 | 4 | [step15-A4-log-minimization.md](../done/step15-A4-log-minimization.md) | Remove avoidable sensitive identifiers from logs | Completed locally |
 | 5 | [step15-B1-portal-xss-and-csp-cleanup.md](../done/step15-B1-portal-xss-and-csp-cleanup.md) | Reduce `innerHTML` and inline handlers so a stronger CSP is practical | Completed locally |
 | 6 | [step15-B2-secret-rotation-and-lifecycle.md](../done/step15-B2-secret-rotation-and-lifecycle.md) | Improve secret rotation and operational lifecycle controls | Completed locally |
-| 7 | [step15-final-production-cutover.md](step15-final-production-cutover.md) | Deploy the security hardening changes and verify live portal/runtime behavior after AWS unlock | Run only after AWS access is restored |
+| 7 | [step15-final-production-cutover.md](../done/step15-final-production-cutover.md) | Record the completed production rollout, verification, and recovery note | Completed |
 
 ## Notes
 

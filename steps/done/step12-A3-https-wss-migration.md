@@ -41,18 +41,25 @@ Recommended after A2 so the secure endpoint configuration lands on top of the va
 
 ## Verification
 
-- [ ] Mobile apps connect successfully over HTTPS and WSS
-- [ ] iOS no longer needs insecure transport exceptions for the production host
+- [ ] Mobile apps complete a real production call flow over HTTPS and WSS on physical devices
+- [x] iOS no longer needs insecure transport exceptions for the production host
 - [x] Docs and scripts show secure endpoints only
+
+Additional production verification already completed in AWS/server-side validation:
+
+- [x] `https://signaling.vidrom.com` is live
+- [x] `wss://signaling.vidrom.com` is live through the TLS edge
+- [x] Production traffic is routed through the secure entry point rather than direct public `:8080` access
 
 ## Current Status
 
-- Local implementation is complete.
-- The remaining production work is tracked in [step12-A3-final-production-cutover.md](step12-A3-final-production-cutover.md).
+- This implementation step is complete.
+- The remaining real-device production validation is tracked in [step12-real-device-validation.md](../todo/step12-real-device-validation.md).
 
 ## Implementation Notes
 
 - Production client defaults now target `https://signaling.vidrom.com` and `wss://signaling.vidrom.com`.
 - Local and temporary non-production endpoint testing should use `EXPO_PUBLIC_SIGNALING_HTTP_URL` and `EXPO_PUBLIC_SIGNALING_WS_URL` when starting Metro instead of editing app source.
 - CDK implementation uses an ACM certificate plus internet-facing ALB for TLS termination in front of the existing Node backend on port `8080`.
-- AWS deploy is pending because the account is currently blocked; infra changes have been implemented and validated with `npm run build` and `cdk synth` in `vidrom-cdk`.
+- The AWS cutover is complete and recorded in [step12-A3-final-production-cutover.md](step12-A3-final-production-cutover.md).
+- The only remaining work is the physical-device validation listed in [step12-real-device-validation.md](../todo/step12-real-device-validation.md).

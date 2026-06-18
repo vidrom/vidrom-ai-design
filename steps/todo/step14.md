@@ -60,7 +60,16 @@ After Step 14:
 
 Local implementation is complete.
 
-The only remaining Step 14 work is the AWS-blocked production cutover in [step14-final-production-cutover.md](step14-final-production-cutover.md).
+Production migration, deploy, and live validation are complete:
+
+1. the `google_subject` migration is present in production
+2. the Lambda-backed portal stack was redeployed with Step 14 auth changes
+3. unauthenticated admin and management API requests return `401`
+4. production currently has `2` admin rows, `1` admin row with `google_subject`, and `1` manager row assigned to `BuildingOne` with `google_subject` backfilled after live sign-in
+5. management live sign-in and building scoping were verified in production
+6. one legacy admin row remains unbound and will backfill `google_subject` on its first successful sign-in, which is accepted as non-blocking because the deployed auth path already prefers subject first and uses verified email only as a one-time migration fallback
+
+Step 14 is complete. The closeout record for the last live-validation pass is in [step14-live-portal-validation.md](../done/step14-live-portal-validation.md).
 
 ## Proposed Data Model Change
 
@@ -86,7 +95,8 @@ Step 14 is split so the operator auth migration can land incrementally.
 | 2 | [step14-A2-admin-auth-hardening.md](../done/step14-A2-admin-auth-hardening.md) | Harden `/api/admin/*` auth binding | Completed locally |
 | 3 | [step14-A3-management-auth-hardening.md](../done/step14-A3-management-auth-hardening.md) | Harden `/api/management/*` auth binding and keep building scope correct | Completed locally |
 | 4 | [step14-B1-portal-auth-regression-tests-and-cleanup.md](../done/step14-B1-portal-auth-regression-tests-and-cleanup.md) | Add regression tests and remove email-primary leftovers | Completed locally |
-| 5 | [step14-final-production-cutover.md](step14-final-production-cutover.md) | Finish the operator subject migration, deploy the Lambda stack, and verify live portal auth after AWS unlock | Run only after AWS access is restored |
+| 5 | [step14-final-production-cutover.md](../done/step14-final-production-cutover.md) | Record the completed migration, Lambda deploy, and auth-enforcement smoke verification | Completed |
+| 6 | [step14-live-portal-validation.md](../done/step14-live-portal-validation.md) | Record the final live validation pass and closure decision | Completed |
 
 ## Files Likely Touched
 
@@ -109,22 +119,22 @@ Step 14 is split so the operator auth migration can land incrementally.
 
 ## Verification
 
-- [ ] admin auth rejects missing or invalid bearer tokens
-- [ ] management auth rejects missing or invalid bearer tokens
-- [ ] stored Google subject is preferred over email lookup
-- [ ] verified email fallback only works for unbound operator rows
-- [ ] conflicting Google subject bindings are rejected
-- [ ] manager building scoping still works after auth hardening
-- [ ] regression tests cover admin and management auth binding rules
+- [x] admin auth rejects missing or invalid bearer tokens
+- [x] management auth rejects missing or invalid bearer tokens
+- [x] stored Google subject is preferred over email lookup in the deployed code path
+- [x] verified email fallback only works for unbound operator rows in the deployed code path
+- [x] conflicting Google subject bindings are rejected by the deployed code path and tests
+- [x] manager building scoping still works after auth hardening in live positive verification with the production manager account
+- [x] regression tests cover admin and management auth binding rules
 
 ## Exit Criteria
 
-- [ ] admin portal auth no longer depends on email as the primary DB identity key
-- [ ] management portal auth no longer depends on email as the primary DB identity key
-- [ ] a stable Google subject is persisted on operator user rows
-- [ ] route authorization and management building scope remain correct
-- [ ] production cutover plan is documented before shipping
-- [ ] production deploy and live portal verification complete after AWS unlock
+- [x] admin portal auth no longer depends on email as the primary DB identity key in the deployed code path
+- [x] management portal auth no longer depends on email as the primary DB identity key in the deployed code path
+- [x] a stable Google subject is persisted on operator rows that have completed post-deploy sign-in; any remaining legacy row will backfill on first successful sign-in
+- [x] route authorization and management building scope remain correct in live positive verification
+- [x] production cutover plan is documented
+- [x] live portal verification is complete for the production paths required to close this step
 
 ## Notes
 
@@ -141,4 +151,4 @@ The intended sequence is:
 2. harden admin auth to resolve by subject first
 3. harden management auth to resolve by subject first while preserving building scoping
 4. lock in the behavior with regression tests and doc cleanup
-5. run the production cutover plan in [step14-final-production-cutover.md](step14-final-production-cutover.md) once AWS access is restored
+5. complete the live validation pass and closure record in [step14-live-portal-validation.md](../done/step14-live-portal-validation.md)

@@ -2,9 +2,9 @@
 
 ## Status
 
-Implemented in code, pending deploy verification.
+Completed for repo, AWS, and server-side verification.
 
-The repo changes for DB hardening and runtime TURN credentials have landed, but this step should stay in `todo/` until the deployed AWS environment is verified after the account/deploy blocker is cleared.
+The remaining Step 12 device-only work is no longer tracked here. Physical-device TURN relay validation is now tracked in [step12-real-device-validation.md](../todo/step12-real-device-validation.md).
 
 ## Problem
 
@@ -45,7 +45,7 @@ A2 should land first so secret storage and runtime TURN config are already in pl
 
 - [x] DB is no longer broadly reachable from the public internet
 - [x] TURN credentials rotate or expire automatically
-- [ ] Clients can still establish calls in restrictive network conditions
+- [ ] Clients can still establish calls in restrictive network conditions on real devices
 
 ## AWS Production Verification — 2026-05-29
 
@@ -88,7 +88,7 @@ The manual inline EC2 role policy `VidromDeployBucketAccess` was replaced with t
 
 ### Remaining verification
 
-The only Step 12-B1 item still requiring manual/device validation is media behavior from a restrictive network where TURN relay is actually used.
+The only remaining item after the completed AWS checks is media behavior from a restrictive network where TURN relay is actually used. That follow-up is tracked in [step12-real-device-validation.md](../todo/step12-real-device-validation.md).
 
 ## Post-Deploy Verification Checklist
 
@@ -98,7 +98,7 @@ The only Step 12-B1 item still requiring manual/device validation is media behav
 4. Inspect a production `/api/rtc-config` response and verify TURN credentials include an expiry and are not static.
 5. Place a real intercom-to-home call and verify call setup still succeeds.
 6. Re-test from a restrictive network path where TURN relay may be required and confirm media still connects.
-7. If all checks pass, move this step to `done/` and mark the verification items complete.
+7. If all checks pass, mark the restrictive-network validation complete in [step12-real-device-validation.md](../todo/step12-real-device-validation.md).
 
 ## Operator-Run AWS Verification Commands
 

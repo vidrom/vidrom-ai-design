@@ -4,6 +4,8 @@
 
 Step 15 is implemented locally, but production is not complete until the CDK-backed portal, Lambda, and EC2 runtime changes are deployed and verified in AWS.
 
+This production rollout and validation work is now complete.
+
 ## Current Status
 
 Already completed locally:
@@ -15,12 +17,14 @@ Already completed locally:
 5. portal pages now rely on external JavaScript and page-level CSP instead of inline handlers/scripts
 6. EC2 secret refresh automation is defined through systemd service and timer units
 
-Not completed in AWS yet:
+Completed in AWS and production verification:
 
-1. deploy the updated CDK stack and portal assets
-2. verify the live portal still loads and authenticates correctly
-3. verify the EC2 signaling service runs under the hardened systemd profile in production
-4. confirm the secret refresh timer is installed and enabled on the live host
+1. the updated CDK stack and portal assets are deployed
+2. the live portal still loads and authenticates correctly
+3. the EC2 signaling service runs under the hardened systemd profile in production
+4. the secret refresh timer is installed and enabled on the live host
+5. the runtime secrets directory is created under `/run/vidrom-signaling`
+6. a manual refresh verification exposed a missing `/opt/vidrom-signaling/run.sh` on the live instance, the canonical EC2 deploy path was re-run, and production health recovered cleanly
 
 ## Files Already Landed
 
@@ -63,6 +67,13 @@ cd vidrom-cdk
 ./cdk-deploy.sh
 ```
 
+Production note: the hardened EC2 runtime verification also required re-running the canonical EC2 application deploy path to restore a missing `run.sh` file on the instance:
+
+```sh
+cd vidrom-cdk
+./deploy-server-ssm.sh
+```
+
 ### 3. Verify the portal edge and auth flows
 
 Confirm from the live environment:
@@ -92,6 +103,20 @@ Mark Step 15 complete in production only when all are true:
 4. EC2 runtime privilege reduction and ephemeral secret handling are active
 5. secret refresh automation is installed and functioning
 
-## Completion Trigger
+## Production Verification Summary
 
-After the deploy and live verification succeed, move this final cutover step out of `todo` and keep the design tracker aligned with the production state.
+The following production state was verified during closure:
+
+1. `npm test` remained green locally for the Step 15 server and portal hardening coverage
+2. `npm run build` remained green in `vidrom-cdk`
+3. live portal pages continued to load after the CSP and external-script changes
+4. portal API responses returned the Step 15 security header set
+5. API Gateway stage throttling was deployed and Lambda-side throttling logic is present in the live artifact
+6. `vidrom-signaling.service` runs as the dedicated `vidrom` user
+7. `vidrom-secret-refresh.timer` is enabled and active
+8. `/run/vidrom-signaling` exists with refreshed runtime secret material after the repaired deploy
+9. `https://signaling.vidrom.com/healthz` recovered cleanly after the EC2 redeploy
+
+## Completion Note
+
+The deploy and live verification succeeded. This file is now the completed production closeout record for Step 15.

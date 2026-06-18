@@ -22,20 +22,38 @@ After Step 16:
 
 ## Current Status
 
-Local implementation is in progress and the main Step 16 hardening set has been applied in the workspace. Live AWS deployment, production secret rotation, and production smoke tests remain deferred until the AWS account is unblocked.
+Local implementation is complete and verified in the workspace. Production posture checks confirm that the main Step 16 server and infrastructure hardening is already live. The remaining work is operational: production secret rotation, authenticated live smoke tests, and documenting any explicitly accepted dependency risk.
 
-Decision: implement the full Step 16 hardening set before starting the manual testing stage, rather than deferring lower-priority security items until after manual QA.
+Decision: treat Step 16 as functionally complete for local implementation and keep the remaining production cutover work separate, rather than reopening already-landed hardening changes.
 
 Rationale:
 
-- manual testing should validate the final security posture and call-flow behavior, not a partially hardened interim state
-- Home WebSocket auth and call-control authorization affect core flows, so they should be tested together with the rest of the call stack
-- public endpoint hardening, dependency updates, and CDK/runtime changes can affect deployment and connectivity assumptions that manual testing should catch
-- doing this as one security milestone reduces the risk of passing manual QA and then invalidating results with later auth/infra changes
+- the local security work is already backed by passing server, mobile, and CDK validation
+- live production checks already confirm the critical public endpoint and infrastructure controls are in place
+- the remaining risk is now in operational rollout discipline rather than missing code paths
 
-Step 16 should still be implemented in small commits/slices internally, but all slices should land before the manual testing stage begins.
+Step 16 implementation no longer needs additional local feature work unless a later smoke test exposes a regression.
 
-Step 16 should be completed before manual testing begins. The live AWS cutover tasks are tracked separately because the AWS account is temporarily blocked.
+Step 16 should be treated as ready for production cutover follow-up. The remaining live tasks are tracked separately.
+
+### Verification Snapshot
+
+Verified locally during this step:
+
+- `vidrom-signaling-server` test suite passes with 43 tests
+- `vidrom-cdk` TypeScript build passes
+- `vidrom-ai-home` test suite passes with 33 tests
+- `vidrom-ai-intercom` test suite passes with 7 tests
+
+Verified against production during this step:
+
+- `https://signaling.vidrom.com/healthz` returns `200` with minimal `{"ok":true}` output
+- `https://signaling.vidrom.com/debug/status` returns `401` without admin auth
+- `https://signaling.vidrom.com/api/rtc-config` returns `401` without resident/device auth
+- signaling ALB target group health check path is `/healthz`
+- the signaling ALB has the production WAF ACL attached
+- production RDS is encrypted, deletion-protected, retained, and not publicly accessible
+- signaling security-group ingress keeps TCP `8080` behind the ALB security group and does not expose public SSH
 
 ### Local Implementation Progress
 
@@ -46,6 +64,7 @@ Completed locally:
 - intercom device JWT registration requires the `intercom` role and matching active device/building context
 - door-code verification no longer discloses expected codes and supports salted PBKDF2 hashes with plaintext runtime migration
 - portal device listing/create/update paths no longer expose or persist new plaintext door codes
+- portal UI device tables no longer imply plaintext door codes are readable; door-code edits are now write-only
 - `/healthz` is public/minimal and `/debug/status` is admin-protected with token-prefix disclosure removed
 - `/api/rtc-config` requires resident or intercom device auth before returning ICE/TURN config
 - EC2 routes now have JSON body-size caps, route-specific rate limits, client-error redaction/truncation, and stricter app validation
@@ -57,10 +76,14 @@ Completed locally:
 Still pending before production cutover:
 
 - run `sql/012-door-code-hash.sql` in production after deployment planning
-- deploy CDK/server/Lambda changes after AWS account access is restored
 - rotate/restrict production JWT, TURN, APNs, Firebase, and mobile API-key material
 - run live WSS/TURN/push/call-flow smoke tests before manual testing begins
 - decide whether to accept remaining moderate dependency advisories or schedule breaking framework/package upgrades
+
+Production verification completed during this step:
+
+- main Step 16 CDK/runtime hardening is already reflected in the deployed stack
+- the only observed `cdk diff` delta was the pre-existing `postgresql15` EC2 bootstrap addition, not a Step 16 hardening gap
 
 Remaining `npm audit --omit=dev` findings after local safe fixes:
 
@@ -86,11 +109,11 @@ Remaining `npm audit --omit=dev` findings after local safe fixes:
 | 10 | Infrastructure hardening | `vidrom-cdk/lib/vidrom-cdk-stack.ts` | Remove world-open SSH or restrict to admin CIDR/SSM; narrow EC2 S3 permissions; enable explicit RDS encryption/deletion protection/backup policy; make portal bucket production-retained; add WAF/rate limits at ALB/CloudFront/API Gateway |
 | 11 | Pin coturn build source | `vidrom-cdk/lib/vidrom-cdk-stack.ts` | Avoid cloning an unpinned default branch; pin a release tag/commit and verify checksums or use a trusted package/image |
 | 12 | Secret and repo hygiene follow-up | Firebase console, Apple Developer, Secrets Manager, repo files | Restrict Firebase mobile API keys by bundle ID/SHA/API scope; rotate production JWT/TURN/APNs/Firebase service-account material before production; remove or relocate APNs key metadata file if not needed |
-| 13 | [step16-final-aws-unblocked-cutover.md](step16-final-aws-unblocked-cutover.md) | AWS-unblocked production deployment and verification | Run later, only after AWS account access is restored |
+| 13 | [step16-final-production-cutover.md](step16-final-production-cutover.md) | Production deployment, secret rotation, and live verification | Open production work |
 
-## AWS Blocked Follow-Up
+## Production Follow-Up
 
-The AWS account is currently blocked and expected to be restored in a few days. All local implementation work should proceed, but live deployment, production secret rotation, CloudFront/ALB/API Gateway verification, and live smoke tests are deferred to [step16-final-aws-unblocked-cutover.md](step16-final-aws-unblocked-cutover.md).
+All local implementation work can proceed independently, but live deployment, production secret rotation, CloudFront/ALB/API Gateway verification, and live smoke tests are tracked in [step16-final-production-cutover.md](step16-final-production-cutover.md).
 
 ## Review Findings
 

@@ -1,23 +1,32 @@
-# Step 16 Final — AWS Unblocked Production Cutover
+# Step 16 Final — Production Cutover
 
 ## Scope
 
-Run this final Step 16 task only after the AWS account is unblocked.
+Run this final Step 16 task after the local Step 16 implementation work is ready for production rollout.
 
-Local code and design changes can be completed while AWS access is blocked, but production verification, secret rotation, and live infrastructure deployment must wait until AWS access is restored.
+Local code and design changes can be completed independently, but production verification, secret rotation, and live infrastructure deployment happen here.
 
 ## Prerequisites
 
-- AWS account access is restored
 - Step 16 local implementation is complete
 - server, mobile, intercom, Lambda, and CDK tests pass locally
 - dependency updates are committed or explicitly documented as accepted risk
 - manual testing has not started yet, or is restarted after this cutover
 
+Current verification baseline from the latest Step 16 review:
+
+- local validation already passed for signaling server, CDK, Home app, and Intercom app
+- production already returns `200` on `/healthz`
+- production already returns `401` on `/debug/status` without admin auth
+- production already returns `401` on `/api/rtc-config` without client auth
+- production ALB health checks already point to `/healthz`
+- production WAF is already attached to the signaling ALB
+- production RDS already has encryption, deletion protection, backup retention, and private access enabled
+
 ## Tasks
 
 1. **Deploy CDK hardening changes**
-   - deploy the updated stack
+   - deploy any remaining stack deltas
    - verify ALB health checks use `/healthz`
    - verify `/debug/status` is no longer publicly readable
    - verify SSH is not publicly exposed and SSM Session Manager still works
@@ -25,7 +34,7 @@ Local code and design changes can be completed while AWS access is blocked, but 
    - verify portal bucket retention behavior is appropriate for production
 
 2. **Deploy signaling server changes**
-   - update EC2 application files and dependencies
+   - update EC2 application files and dependencies only if the deployed instance is behind the verified local workspace state
    - restart `vidrom-signaling.service`
    - restart coturn if runtime TURN settings changed
    - verify `NODE_ENV=production` startup still passes validation
@@ -33,7 +42,7 @@ Local code and design changes can be completed while AWS access is blocked, but 
 3. **Deploy portal Lambda changes**
    - deploy Lambda API bundle with door-code response changes and dependency updates
    - verify admin and management portal auth still works
-   - verify portal device lists do not expose plaintext door codes
+   - verify portal device lists do not expose plaintext door codes or imply that existing door codes are readable
 
 4. **Run production secret rotation / restriction**
    - rotate JWT secret if production devices can be reprovisioned safely
@@ -54,6 +63,15 @@ Local code and design changes can be completed while AWS access is blocked, but 
    - debug/status access denied without admin auth
    - oversized / noisy requests rejected or rate-limited
 
+## Remaining Focus
+
+This cutover task is now mostly about operational proof rather than implementation rollout. Prioritize:
+
+1. secret rotation and restriction
+2. authenticated end-to-end call-flow and push smoke tests
+3. confirming the deployed portal bundle matches the write-only door-code UI behavior
+4. documenting any dependency advisories that are being intentionally deferred
+
 6. **Prepare for manual testing**
    - confirm no live CloudWatch/server logs contain bearer tokens, door codes, or raw push tokens
    - confirm `npm audit --omit=dev` status for deployed server/Lambda packages
@@ -62,7 +80,7 @@ Local code and design changes can be completed while AWS access is blocked, but 
 
 ## Acceptance Criteria
 
-- production deployment is successful after AWS access is restored
+- production deployment is successful
 - `/healthz` is public and minimal
 - `/debug/status` requires authorized admin access or is unavailable in production
 - Home WebSocket auth and intercom JWT auth both work against production

@@ -31,21 +31,22 @@ After Step 12:
 
 ## Current Status
 
-Most Step 12 repo-side work is complete.
+Most Step 12 work is complete.
 
-Completed locally:
+Completed locally and in AWS/server-side verification:
 
 1. signaling correctness hardening
 2. secret-management cleanup and runtime validation
 3. HTTPS/WSS migration implementation
+4. HTTPS/WSS production edge deployment and live endpoint verification
+5. DB and TURN hardening deployment verification
 4. signaling contract alignment docs
 5. critical server test coverage
 6. repo docs and reproducibility cleanup
 
 Still remaining:
 
-1. [step12-A3-final-production-cutover.md](step12-A3-final-production-cutover.md) for the AWS-blocked secure transport rollout and live verification
-2. [step12-B1-db-and-turn-hardening.md](step12-B1-db-and-turn-hardening.md) for post-deploy DB/TURN verification before it can move to `done`
+1. [step12-real-device-validation.md](step12-real-device-validation.md) for the physical-device secure call-flow and restrictive-network TURN relay checks
 
 ---
 
@@ -115,11 +116,12 @@ Step 12 is now split into concrete sub-step docs so the work can move in smaller
 | 1 | [step12-A1-signaling-correctness.md](../done/step12-A1-signaling-correctness.md) | Fix the ring-path correctness bug | Completed |
 | 2 | [step12-A2-secret-management.md](../done/step12-A2-secret-management.md) | Remove hardcoded secrets and validate config at startup | Completed |
 | 3 | [step12-A3-https-wss-migration.md](../done/step12-A3-https-wss-migration.md) | Move production traffic to HTTPS and WSS | Completed locally |
-| 4 | [step12-A3-final-production-cutover.md](step12-A3-final-production-cutover.md) | Deploy the secure signaling edge and verify live HTTPS/WSS traffic after AWS unlock | Run only after AWS access is restored |
-| 5 | [step12-B1-db-and-turn-hardening.md](step12-B1-db-and-turn-hardening.md) | Tighten DB exposure and TURN credentials | Best after A2 |
+| 4 | [step12-A3-final-production-cutover.md](../done/step12-A3-final-production-cutover.md) | Record the completed AWS HTTPS/WSS production cutover and live endpoint verification | Completed |
+| 5 | [step12-B1-db-and-turn-hardening.md](../done/step12-B1-db-and-turn-hardening.md) | Tighten DB exposure and TURN credentials | AWS/server-side verification completed |
 | 6 | [step12-B2-contract-alignment.md](../done/step12-B2-contract-alignment.md) | Align docs with the live signaling contract | Completed |
 | 7 | [step12-C1-server-tests.md](../done/step12-C1-server-tests.md) | Add critical server, infra, and targeted mobile tests | Completed |
 | 8 | [step12-C2-repo-docs-and-reproducibility.md](../done/step12-C2-repo-docs-and-reproducibility.md) | Rewrite docs and verify build reproducibility | Completed |
+| 9 | [step12-real-device-validation.md](step12-real-device-validation.md) | Finish the remaining physical-device secure transport and TURN relay validation | Only open Step 12 work |
 
 ## Execution Notes
 
@@ -135,10 +137,10 @@ The intent of the split is:
 
 Step 12 is complete when all of the following are true:
 
-- [ ] The confirmed ring-path bug is fixed and covered by a regression test
-- [ ] No hardcoded production secret remains in committed app, server, or infra source
-- [ ] Production app traffic uses HTTPS and WSS only
-- [ ] DB and TURN security posture are improved to production-grade defaults
-- [ ] Design docs reflect the real signaling message contract
-- [ ] Critical signaling behavior is covered by meaningful automated tests
-- [ ] Project READMEs and setup docs reflect the actual deployed architecture and workflow
+- [x] The confirmed ring-path bug is fixed and covered by a regression test
+- [x] No hardcoded production secret remains in committed app, server, or infra source
+- [ ] Production app traffic is validated end-to-end over HTTPS and WSS on real devices
+- [ ] TURN relay behavior is validated on a restrictive real network path
+- [x] Design docs reflect the real signaling message contract
+- [x] Critical signaling behavior is covered by meaningful automated tests
+- [x] Project READMEs and setup docs reflect the actual deployed architecture and workflow

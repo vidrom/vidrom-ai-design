@@ -1,14 +1,12 @@
-# Step 14 Final — Production Cutover After AWS Unlock
+# Step 14 Final — Production Migration And Deploy Record
 
 ## Purpose
 
-Step 14 is not fully complete in production until the operator subject migration is applied, the Lambda-backed portal API is redeployed, and the hardened admin and management flows are re-verified against the live AWS environment.
-
-Use this step only after the AWS account is unlocked again and the local Step 14 implementation work is already landed.
+Step 14 production migration, Lambda deploy, auth-enforcement smoke verification, and closure validation are complete. The final live-validation closeout is recorded in [step14-live-portal-validation.md](step14-live-portal-validation.md).
 
 ## Current Status
 
-This step assumes these Step 14 items are already completed locally:
+Completed locally and in production deployment/smoke verification:
 
 1. operator subject persistence and subject-first auth resolution are implemented
 2. `/api/admin/*` auth resolves operators by stable Google subject first
@@ -16,11 +14,20 @@ This step assumes these Step 14 items are already completed locally:
 4. portal auth regression tests for subject binding, role enforcement, and manager scoping are passing
 5. portal auth docs are updated to describe subject-first identity binding
 
-Not completed in AWS yet:
+6. the production `google_subject` migration is applied
+7. the updated Lambda/API stack is deployed
+8. unauthenticated admin and management API smoke checks return `401`
 
-1. apply the Step 14 database migration that adds the operator Google subject column
-2. deploy the updated Lambda/API stack so the hardened portal auth code is live
-3. verify admin and management auth flows against the real AWS database and Google auth path
+Accepted follow-up outside this completed deploy record:
+
+1. one legacy admin row still has a null `google_subject` and will backfill it on first successful sign-in
+
+Current production operator row counts at handoff:
+
+1. admins: `2`
+2. admins with `google_subject`: `1`
+3. managers: `1`
+4. managers with `google_subject`: `1`
 
 ## Files Expected To Be Landed Before This Step Runs
 
@@ -33,7 +40,7 @@ Not completed in AWS yet:
 - `vidrom-ai-design/management-portal.md`
 - `vidrom-ai-design/business-logic/database-schema.md`
 
-## Do This When AWS Is Unlocked
+## Recorded Production Procedure
 
 ### 1. Reconfirm local state before shipping
 
@@ -85,6 +92,8 @@ cd vidrom-cdk
 
 ### 4. Run production verification for admin auth
 
+Auth-enforcement smoke checks are complete. The final live-validation closeout is recorded in [step14-live-portal-validation.md](step14-live-portal-validation.md).
+
 Verify these admin flows against the live environment:
 
 1. sign in to the admin portal with a legitimate admin account
@@ -95,6 +104,8 @@ Verify these admin flows against the live environment:
 
 ### 5. Run production verification for management auth
 
+This positive verification was completed with the production manager row. The closure decision is recorded in [step14-live-portal-validation.md](step14-live-portal-validation.md).
+
 Verify these management flows against the live environment:
 
 1. sign in to the management portal with a legitimate manager account
@@ -104,6 +115,8 @@ Verify these management flows against the live environment:
 5. missing or invalid bearer auth returns `401`
 
 ### 6. Verify Google subject backfill in the database
+
+This is complete enough for step closure: the manager row backfill is verified, and the remaining legacy admin row will backfill `google_subject` on first successful sign-in.
 
 For at least one existing admin and one existing manager who previously had a null operator subject, confirm that Step 14 backfilled the subject after a successful authenticated operator request.
 
@@ -134,6 +147,6 @@ Unlike Step 13, this work hardens the Lambda-backed portal auth path, so shippin
 
 Verified email is acceptable only as a one-time migration bridge for rows that do not yet have a stored subject. After backfill, operator auth should bind to the stable Google subject on every request.
 
-## Completion Trigger
+## Completion Note
 
-After the DB migration, CDK deploy, and live portal verification succeed, move Step 14 out of `todo` into the appropriate completed location and update the parent Step 14 checklist.
+The DB migration, CDK deploy, auth-enforcement smoke verification, and production validation pass succeeded. This file is now a completed production deploy record, with the final closure note in [step14-live-portal-validation.md](step14-live-portal-validation.md).

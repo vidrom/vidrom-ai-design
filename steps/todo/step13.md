@@ -24,7 +24,21 @@ After Step 13:
 
 Local implementation is complete.
 
-The only remaining Step 13 work is the AWS-blocked production cutover in [step13-final-production-cutover.md](step13-final-production-cutover.md).
+AWS production migration, deploy, and auth-enforcement checks are complete:
+
+1. the Step 13 DB migration is applied (`users.firebase_uid` and `uq_users_firebase_uid` exist)
+2. the EC2 signaling server was redeployed after AWS was unblocked
+3. unauthenticated resident endpoints reject requests in production
+4. production now has resident users and apartment assignments available for positive verification
+
+Current production resident state before the final device validation pass:
+
+1. resident users: `5`
+2. apartment assignments: `4`
+3. apartments with residents: `3`
+4. resident users with `firebase_uid`: `0`
+
+The remaining Step 13 work is positive resident-flow verification in [step13-real-device-validation.md](step13-real-device-validation.md).
 
 ## Implementation Order
 
@@ -38,7 +52,8 @@ Step 13 is now split into smaller sub-steps so the hardening can land incrementa
 | 4 | [step13-A4-authenticated-call-actions.md](../done/step13-A4-authenticated-call-actions.md) | Harden delivery ack and HTTP accept ownership checks | Completed locally |
 | 5 | [step13-B1-home-bearer-auth-transport.md](../done/step13-B1-home-bearer-auth-transport.md) | Add bearer auth transport in the home app | Completed locally |
 | 6 | [step13-B2-auth-regression-tests-and-cleanup.md](../done/step13-B2-auth-regression-tests-and-cleanup.md) | Add auth regression coverage and remove compatibility fallbacks | Completed locally |
-| 7 | [step13-final-production-cutover.md](step13-final-production-cutover.md) | Finish production migration, deploy, and live verification after AWS unlock | Run only after AWS access is restored |
+| 8 | [step13-final-production-cutover.md](../done/step13-final-production-cutover.md) | Record the completed production migration, deploy, and auth-enforcement verification | Completed |
+| 9 | [step13-real-device-validation.md](step13-real-device-validation.md) | Finish positive resident production validation and verify `firebase_uid` backfill | Only open Step 13 work |
 
 ## Execution Notes
 
@@ -49,14 +64,15 @@ The intended sequence is:
 3. update the home app to attach Firebase bearer tokens
 4. lock in behavior with regression coverage
 5. remove compatibility paths that still accept caller-owned identity fields
-6. after AWS is available again, apply the `firebase_uid` migration and ship the live cutover
+6. complete the remaining positive resident production checks on real devices and verify `firebase_uid` backfill
 
 ## Exit Criteria
 
-- [ ] resident-facing signaling HTTP endpoints require bearer auth
-- [ ] apartment resolution ignores spoofed email input
-- [ ] token registration cannot hijack another resident's token ownership
-- [ ] call ack and HTTP accept reject unauthorized apartment access
-- [ ] home app sends authenticated resident HTTP requests consistently
-- [ ] server tests cover auth and ownership boundaries
-- [ ] production migration, deploy, and live verification complete after AWS unlock
+- [x] resident-facing signaling HTTP endpoints require bearer auth
+- [x] apartment resolution ignores spoofed email input at the server boundary
+- [x] token registration cannot hijack another resident's token ownership
+- [x] call ack and HTTP accept reject unauthorized apartment access
+- [x] home app sends authenticated resident HTTP requests consistently
+- [x] server tests cover auth and ownership boundaries
+- [ ] positive resident production flow is verified on real devices
+- [ ] `firebase_uid` backfill is observed and confirmed as the primary resident lookup path

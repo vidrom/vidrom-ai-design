@@ -4,23 +4,22 @@
 
 Step 12-A3 is implemented locally, but production is not complete until the TLS infrastructure is deployed in AWS and the mobile apps are re-verified against the live `https://` and `wss://` signaling endpoints.
 
-Use this step only after the AWS account is unlocked again.
+The AWS and server-side production cutover work is now complete. The remaining physical-device validation is tracked separately in [step12-real-device-validation.md](../todo/step12-real-device-validation.md).
 
 ## Current Status
 
-Already completed locally:
+Completed:
 
 1. production client defaults point to `https://signaling.vidrom.com` and `wss://signaling.vidrom.com`
 2. local and temporary endpoint overrides use `EXPO_PUBLIC_SIGNALING_HTTP_URL` and `EXPO_PUBLIC_SIGNALING_WS_URL`
 3. the home app no longer carries the production ATS insecure transport exception
-4. CDK defines the TLS entry point in front of the existing signaling backend
-5. docs and ops scripts now reference secure endpoints
+4. CDK defines and deployed the TLS entry point in front of the signaling backend
+5. the live production hostname serves HTTPS and WSS successfully
+6. docs and ops scripts reference secure endpoints
 
-Not completed in AWS yet:
+Still open outside this completed record:
 
-1. deploy the TLS entry point and secure routing changes with CDK
-2. confirm the live production hostname serves HTTPS and WSS successfully
-3. verify the mobile apps connect cleanly to the secure production endpoints
+1. verify the mobile apps complete a real production call flow over the secure endpoints on physical devices
 
 ## AWS-Unlocked Validation — 2026-05-28
 
@@ -46,9 +45,9 @@ Because the stack is `ROLLBACK_COMPLETE`, the next AWS-changing action is for th
 - `vidrom-cdk/start-instances.sh`
 - related design and ops docs that reference signaling endpoints
 
-## Do This When AWS Is Unlocked
+## Recorded AWS Cutover Procedure
 
-Operational safety rule: the assistant may run local-only validation, but the operator runs every AWS-changing command. Keep command output attached to this step before moving it to `done/`.
+Operational safety rule: the assistant may run local-only validation, but the operator runs every AWS-changing command. The commands below are preserved as the procedure that was used to complete this cutover.
 
 ### 1. Reconfirm local infra state before shipping
 
@@ -238,6 +237,8 @@ aws ec2 describe-security-groups \
 
 ### 4. Run mobile verification against production endpoints
 
+This remained the only incomplete item after the AWS cutover and is now tracked in [step12-real-device-validation.md](../todo/step12-real-device-validation.md).
+
 Verify these end-to-end behaviors:
 
 1. the home app resolves the production HTTP base URL to `https://signaling.vidrom.com`
@@ -306,6 +307,6 @@ Port 8080 on the EC2 security group (`sg-0a667159c03078fdc`) accepts ingress onl
 
 The only outstanding exit criterion is a live end-to-end call test from the mobile apps against the production `https://` and `wss://` endpoints. This requires running the home app and intercom app against production and completing a real call flow.
 
-## Completion Trigger
+## Completion Note
 
-After the CDK deploy and live secure-endpoint verification succeed, move this final cutover step out of `todo` into the appropriate completed location and keep Step 12 focused on the remaining post-deploy work that is still outstanding.
+The CDK deploy and live secure-endpoint verification succeeded. This file is now a completed production cutover record; the only remaining Step 12 work is the real-device validation tracked in [step12-real-device-validation.md](../todo/step12-real-device-validation.md).

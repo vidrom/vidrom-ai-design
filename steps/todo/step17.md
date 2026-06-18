@@ -4,6 +4,8 @@
 
 Step 17 turns the current manual-heavy release validation plan into a repeatable automated regression system across the full Vidrom monorepo.
 
+Nightly automation is intentionally not part of the immediate Step 17 delivery target. This step should establish the core pull-request and local regression layers first, while keeping the heavier nightly suites tracked as future follow-up work.
+
 The goal is not to eliminate all real-device testing. Native APNs, FCM wakeup, CallKit, Android full-screen notifications, real camera/microphone behavior, and final production connectivity still need focused device validation. The goal is to move most business-critical regression coverage into CI and headless test harnesses so manual testing becomes a small release smoke instead of the primary safety net.
 
 ## Goals
@@ -28,15 +30,29 @@ The repository already has useful package-level automated coverage:
 - signaling server tests cover auth, resident ownership, WebSocket ring/call flow, Lambda admin auth, rate limits, CSP/security headers, and startup config
 - CDK tests cover synthesized infrastructure expectations
 
+Initial Step 17 progress already landed:
+
+- GitHub Actions now runs monorepo lint, coverage suites, and the CDK build on push and pull request events
+- root workspace scripts now expose `npm run test`, `npm run test:coverage`, `npm run build:ci`, and `npm run ci` for a single entrypoint into the shared validation flow
+- the Home app manifest and lockfile now include the Google Sign-In dependency that was already required by the app source and Expo plugin configuration, removing a real CI install/lint mismatch
+- a shared signaling contract helper now defines canonical payload shapes for the core `ring`, `accept`, `decline`, `call-taken`, `offer`, `answer`, `candidate`, `watch`, `watch-end`, `hangup`, and `open-door` flows used by Home, Intercom, and signaling-server tests
+- a reusable headless scenario-runner foundation now exists under `vidrom-signaling-server/test/e2e/`, with fake Home and Intercom clients driving the real signaling-server WebSocket handler through multi-step scenarios
+- the headless scenario runner now covers late-join pending-ring replay, late-join `call-taken`, decline-all rejection, accepted-call door-open cleanup, second-watcher displacement, and watch rejection while the intercom is already on a call
+- the expanded scenario-runner suite is now validated by the default root `npm run test:coverage` gate, and signaling-server `wsHandler` coverage increased as a result
+- the headless scenario runner now also covers pending-ring timeout expiry, ringing-home disconnect-as-decline, non-winning home disconnect during an accepted call, and accepted-home disconnect ending the active call with `peer-disconnected` sent to the intercom
+- after the latest scenario expansion, the signaling-server coverage gate now runs 57 passing tests and `wsHandler.js` coverage increased again to 67.86% statements
+- the headless scenario runner now also asserts `call-taken` push fallback to offline apartment devices through fake APNs/FCM adapters, including stale-token cleanup on invalid-device responses
+- after the latest push-fallback scenario expansion, the signaling-server coverage gate now runs 59 passing tests and `wsHandler.js` coverage increased again to 70.69% statements
+
 The main gaps are:
 
-- CI currently runs lint only and does not run coverage, package tests, or CDK build checks
-- there is no shared signaling message schema/contract gate across Home, Intercom, and server
-- end-to-end call/watch/door behavior is mostly validated through package-level mocks and manual device testing rather than a cross-package scenario runner
+- the scenario runner now covers the main call/watch foundation plus late-join, timeout, disconnect-as-decline, core door-open/watch contention, and `call-taken` push-fallback cleanup cases, but it still does not cover HTTP-accept reconciliation or richer reconnect/resume semantics through the high-level runner
 - database-backed behavior is often mocked rather than verified against a real seeded PostgreSQL schema
 - portal CRUD/scoping behavior is not covered by browser automation
 - WebRTC media setup is not smoke-tested with fake media in CI
 - mobile UI automation is not yet present
+
+For this step, the priority is to land the foundations that can run reliably on every pull request or on-demand locally. Nightly-only suites should remain documented but are not required for Step 17 completion.
 
 ## Implementation Order
 
@@ -54,6 +70,17 @@ The main gaps are:
 | 10 | Add deployed smoke scripts | signaling server scripts or workspace scripts | Verify `/healthz`, authenticated `/api/rtc-config`, portal load/auth, WSS connectivity, and a headless ring/accept/hangup against the deployed environment |
 | 11 | Reframe manual release checklist | `vidrom-ai-design/test-plan.md` | Limit manual device testing to APNs/FCM wake, CallKit, Android full-screen notifications, real media, and final production sanity checks |
 
+## Step Boundary
+
+Step 17 should be considered complete once the repo has strong pull-request automation, shared signaling contract checks, headless cross-package scenario coverage for critical call/watch flows, and an updated manual release checklist.
+
+The following items are explicitly valuable but deferred beyond the main Step 17 completion gate:
+
+- nightly portal browser runs
+- nightly fake-media WebRTC smoke tests
+- nightly Android emulator and Home/Intercom Maestro runs
+- nightly deployed smoke checks against the shared cloud environment
+
 ## Recommended Test Cadence
 
 ### Every Pull Request
@@ -70,7 +97,9 @@ The main gaps are:
 - run PostgreSQL integration tests
 - run affected portal browser tests
 
-### Nightly
+### Future Nightly Expansion
+
+These suites should be added after the core Step 17 pull-request automation is stable and useful:
 
 - Playwright portal suite
 - fake-media WebRTC smoke tests
@@ -79,7 +108,7 @@ The main gaps are:
 
 ### Before Release
 
-- all CI and nightly automation green
+- all Step 17 CI automation green
 - deployed smoke checks green
 - minimal real-device pass for native boundaries:
   - iOS VoIP push wakes the app and shows CallKit
@@ -99,7 +128,7 @@ The main gaps are:
 - PostgreSQL integration tests use seeded multi-building, multi-apartment, multi-resident fixtures
 - manager/admin portal browser tests prove scoped access and forbidden access boundaries
 - fake-media WebRTC smoke proves a browser peer connection can be established through the signaling contract
-- emulator smoke tests can run locally and in CI/nightly without real APNs or FCM delivery
+- emulator smoke tests can run locally and on demand without real APNs or FCM delivery, with nightly scheduling deferred to a future follow-up
 - manual test plan is updated so real-device testing focuses on native OS and production-only risks
 
 ## Notes

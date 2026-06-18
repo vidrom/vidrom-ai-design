@@ -4,11 +4,11 @@
 
 Step 13 code is implemented locally, but production is not finished until the database migration is applied, the signaling server code is deployed, and the resident flows are re-verified against the real AWS environment.
 
-Use this step when the AWS account is unlocked again.
+The production migration, deploy, and auth-enforcement portion of this step is now complete. The remaining real-device resident validation is tracked separately in [step13-real-device-validation.md](../todo/step13-real-device-validation.md).
 
 ## Current Status
 
-Already completed locally:
+Completed locally and in production:
 
 1. resident HTTP endpoints require Firebase bearer auth
 2. resident identity and apartment scope are derived server-side
@@ -16,12 +16,44 @@ Already completed locally:
 4. the home app sends bearer auth on resident HTTP requests
 5. server regression tests for resident auth and ownership boundaries are passing
 6. resident auth now prefers persisted `users.firebase_uid` and only falls back to verified email once in order to backfill the UID
+7. the production database migration is applied
+8. the EC2 signaling server code is deployed
+9. unauthenticated production smoke checks pass
 
-Not completed in AWS yet:
+Still open outside this completed record:
 
-1. apply the database migration that adds `users.firebase_uid`
-2. deploy the updated EC2 signaling server code
-3. verify the resident auth flow against the live database and push infrastructure
+1. verify the positive resident flow on real devices
+2. verify `firebase_uid` backfill for at least one production resident
+
+## AWS Production Verification — 2026-05-29
+
+Completed after AWS access was restored:
+
+1. `npm test` passed in `vidrom-signaling-server` (`43` tests passing).
+2. The production database has the Step 13 migration:
+  - `users.firebase_uid` exists
+  - `uq_users_firebase_uid` exists
+3. EC2 signaling server code was redeployed with `vidrom-cdk/deploy-server-ssm.sh`.
+4. Post-deploy service checks passed:
+  - `vidrom-signaling` is `active`
+  - `coturn` is `active`
+  - local `/healthz` returns `{"ok":true}`
+  - public `https://signaling.vidrom.com/healthz` returns `{"ok":true}`
+5. Production auth enforcement smoke checks passed:
+  - unauthenticated `POST /api/home/resolve-apartment` returns `401`
+  - unauthenticated `POST /register-fcm-token` returns `401`
+  - unauthenticated `GET /api/rtc-config` returns `401`
+
+Current production resident state at handoff to device validation:
+
+1. resident users: `5`
+2. apartment assignments: `4`
+3. apartments with residents: `3`
+4. resident users with `firebase_uid`: `0`
+
+The remaining checks now require real-device execution and are tracked in [step13-real-device-validation.md](../todo/step13-real-device-validation.md).
+
+Remaining live verification moved to [step13-real-device-validation.md](../todo/step13-real-device-validation.md).
 
 ## Files Already Landed
 
@@ -37,7 +69,7 @@ Not completed in AWS yet:
 - `vidrom-signaling-server/test/auth.test.js`
 - `vidrom-signaling-server/test/httpRoutes.residentAuth.test.js`
 
-## Do This When AWS Is Unlocked
+## Recorded Production Procedure
 
 ### 1. Reconfirm local state before shipping
 
@@ -101,6 +133,8 @@ aws cloudformation continue-update-rollback \
 
 ### 4. Run production verification
 
+The unauthenticated production smoke checks in this section are complete. The positive resident-device checks are tracked separately in [step13-real-device-validation.md](../todo/step13-real-device-validation.md).
+
 Verify these resident flows against the live environment:
 
 1. sign in to the home app with a legitimate resident account
@@ -113,6 +147,8 @@ Verify these resident flows against the live environment:
 8. a resident outside the apartment scope cannot ack or accept the call
 
 ### 5. Verify Firebase UID backfill in the database
+
+This remained incomplete at the time this production cutover record was moved to `done/`. Complete it through [step13-real-device-validation.md](../todo/step13-real-device-validation.md).
 
 For at least one existing resident user who previously had `firebase_uid = NULL`, confirm that Step 13 backfilled the UID after a successful authenticated resident request.
 
@@ -147,6 +183,6 @@ Step 13 changed application code and database schema, not the infrastructure top
 2. EC2 signaling code deploy
 3. live verification
 
-## Completion Trigger
+## Completion Note
 
-After the migration, EC2 deploy, and live verification succeed, move Step 13 out of `todo` into the appropriate completed location and update the parent Step 13 checklist.
+The migration, EC2 deploy, and production auth-enforcement verification succeeded. This file is now a completed production cutover record; the only remaining Step 13 work is the real-device validation tracked in [step13-real-device-validation.md](../todo/step13-real-device-validation.md).
