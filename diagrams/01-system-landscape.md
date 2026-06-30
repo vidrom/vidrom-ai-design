@@ -17,7 +17,7 @@ flowchart LR
     subgraph Compute
         Api[Portal API Lambda\nadmin + management REST]
         Signal[Signaling EC2 Service\nHTTP + WebSocket]
-        Turn[TURN/STUN on EC2\ncoturn]
+        Twilio[Twilio NTS\nmanaged STUN/TURN]
     end
 
     subgraph Data
@@ -52,8 +52,9 @@ flowchart LR
     Home -. iOS VoIP .- APNs
     Home -->|ICE config| Signal
     Intercom -->|ICE config| Signal
-    Home <-->|WebRTC media| Turn
-    Intercom <-->|WebRTC media| Turn
+    Signal -->|short-lived ICE config| Twilio
+    Home <-->|WebRTC media| Twilio
+    Intercom <-->|WebRTC media| Twilio
 ```
 
 ## Notes
@@ -61,3 +62,4 @@ flowchart LR
 - The home app keeps signaling mostly on demand, while the intercom stays persistently connected.
 - Portal HTML is static and served from S3 through CloudFront, but the admin and management APIs run in Lambda.
 - The EC2 signaling service still owns both WebSocket signaling and a set of stateful HTTP endpoints used by the mobile apps.
+- TURN relay is now provided by Twilio NTS rather than a coturn process on the signaling host.

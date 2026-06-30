@@ -121,36 +121,25 @@ ICE tests connectivity between all candidate pairs and picks the best working pa
 
 ### Our Current Status
 
-**We do not currently configure a TURN server.** The ICE configuration only includes a STUN server. This means:
+The apps now fetch runtime ICE configuration from `GET /api/rtc-config` on the signaling server.
 
-- Calls work well when both devices are on the **same local network** (host candidates).
-- Calls work in **most** remote scenarios where NAT hole-punching succeeds (server-reflexive candidates).
-- Calls will **fail** in environments with symmetric NAT or strict corporate firewalls where no direct path can be established.
+- The signaling server requests a short-lived Twilio Network Traversal Service token and returns the resulting STUN/TURN list to both clients.
+- Both apps cache that response until `expiresAt`, then re-fetch.
+- If the runtime ICE request fails, both apps fall back to **Google public STUN only** as an emergency path.
 
-### Adding TURN (Future)
+This means:
 
-To guarantee connectivity in all network conditions, we would add a TURN server to our ICE configuration:
+- Calls still prefer direct peer-to-peer connectivity when NAT traversal succeeds.
+- TURN relay is available in restrictive network conditions through Twilio without shipping relay credentials in the apps.
+- If Twilio or `/api/rtc-config` is unavailable, same-LAN and simpler NAT cases may still work via STUN, but strict NAT/firewall scenarios can still fail until the managed TURN path recovers.
 
-```js
-export const ICE_SERVERS = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    {
-      urls: 'turn:turn.vidrom.com:3478',
-      username: '<credential>',
-      credential: '<password>',
-    },
-  ],
-};
-```
+### Provider Decision
 
-Options for provisioning a TURN server:
-- **Self-hosted** — deploy [coturn](https://github.com/coturn/coturn) on our AWS infrastructure via CDK.
-- **Managed** — use a service like Twilio Network Traversal or Xirsys.
+We are standardising on **Twilio NTS as the primary STUN/TURN provider** for pre-production and early production.
 
-The TURN configuration must be added in **both** apps:
-- `vidrom-ai-home/config.js` — `ICE_SERVERS`
-- `vidrom-ai-intercom/webrtcHtml.js` — `ICE_SERVERS_JSON`
+- Keep the backend `/api/rtc-config` abstraction so the apps do not depend on any one provider directly.
+- Keep Google public STUN as a client-side emergency fallback only.
+- Do not continue investing in the self-hosted coturn path unless future relay volume or regional requirements justify reintroducing it.
 
 ---
 
@@ -169,18 +158,19 @@ The TURN configuration must be added in **both** apps:
 │   └──────┬───────┘                                       │           │
 │          │                                               │           │
 │          │              ┌──────────────┐          WebSocket (on-demand)
-│          │              │  STUN Server │                  │           │
-│          │              │  (Google)    │          ┌───────┴────────┐  │
-│          │              └──────┬───────┘          │  Home App      │  │
-│          │                     │                  │  Android/iOS   │  │
-│          │    ◄── IP discovery ──►                │                │  │
+│          │              │ Twilio NTS   │                  │           │
+│          │              │ via /rtc-    │          ┌───────┴────────┐  │
+│          │              │ config       │          │  Home App      │  │
+│          │              └──────┬───────┘          │  Android/iOS   │  │
+│          │                     │                  │                │  │
+│          │   ◄── STUN/TURN creds ─►               │                │  │
 │          │                                        │  react-native- │  │
 │          │                                        │  webrtc        │  │
 │          │◄═══════ Peer-to-Peer Media ══════════►│                │  │
 │          │         (audio + video)                 └────────────────┘  │
 │                                                                      │
-│   ┌─────────────┐  (Future)                                         │
-│   │  TURN Server │  Relay fallback when direct connection fails      │
+│   ┌─────────────┐  (Emergency fallback)                              │
+│   │ Google STUN │  Discovery only when runtime ICE config fails      │
 │   └─────────────┘                                                    │
 └──────────────────────────────────────────────────────────────────────┘
 ```

@@ -69,7 +69,7 @@ Completed locally:
 - `/api/rtc-config` requires resident or intercom device auth before returning ICE/TURN config
 - EC2 routes now have JSON body-size caps, route-specific rate limits, client-error redaction/truncation, and stricter app validation
 - intercom provisioning codes now require 6 digits, one-time pending state, and a configurable TTL
-- CDK removes public SSH ingress, narrows EC2 S3 permissions, pins coturn, retains the portal bucket, enables RDS encryption/deletion protection, points ALB health checks to `/healthz`, and adds WAF managed/rate rules to the signaling ALB and portal CloudFront edge
+- CDK removes public SSH ingress, narrows EC2 S3 permissions, retains the portal bucket, enables RDS encryption/deletion protection, points ALB health checks to `/healthz`, removes legacy coturn/TURN ingress from the live path, and adds WAF managed/rate rules to the signaling ALB and portal CloudFront edge
 - server, Lambda, CDK, Home, and Intercom lockfiles received non-breaking dependency audit updates where available
 - regression tests now cover public health, protected debug status, authenticated RTC config, door-code non-disclosure, oversized-body rejection, and hardened resident call ownership
 
@@ -107,7 +107,7 @@ Remaining `npm audit --omit=dev` findings after local safe fixes:
 | 8 | Harden intercom provisioning exchange | `vidrom-signaling-server/src/httpRoutes.js`, `vidrom-signaling-server/src/devices.js` | Add attempt counters, TTL enforcement checks, IP/code rate limiting, audit logs for failures, and one-time-use guarantees |
 | 9 | Upgrade vulnerable production dependencies | all `package.json` / lockfiles | Prioritize server and Lambda; then mobile; then CDK. Address critical `protobufjs`, high XML/parser issues, `ws`, `node-forge` via `@parse/node-apn`, Expo/RN chain advisories, and Lambda `uuid` transitives |
 | 10 | Infrastructure hardening | `vidrom-cdk/lib/vidrom-cdk-stack.ts` | Remove world-open SSH or restrict to admin CIDR/SSM; narrow EC2 S3 permissions; enable explicit RDS encryption/deletion protection/backup policy; make portal bucket production-retained; add WAF/rate limits at ALB/CloudFront/API Gateway |
-| 11 | Pin coturn build source | `vidrom-cdk/lib/vidrom-cdk-stack.ts` | Avoid cloning an unpinned default branch; pin a release tag/commit and verify checksums or use a trusted package/image |
+| 11 | Remove obsolete coturn bootstrap | `vidrom-cdk/lib/vidrom-cdk-stack.ts`, `vidrom-cdk/deploy-server-ssm.sh` | Remove the no-longer-used coturn install, TURN ingress, and service restarts so live infra matches the Twilio-primary design |
 | 12 | Secret and repo hygiene follow-up | Firebase console, Apple Developer, Secrets Manager, repo files | Restrict Firebase mobile API keys by bundle ID/SHA/API scope; rotate production JWT/TURN/APNs/Firebase service-account material before production; remove or relocate APNs key metadata file if not needed |
 | 13 | [step16-final-production-cutover.md](step16-final-production-cutover.md) | Production deployment, secret rotation, and live verification | Open production work |
 
@@ -216,15 +216,16 @@ Observed hardening opportunities:
 - portal bucket should not be `DESTROY`/`autoDeleteObjects` in production
 - add WAF/rate controls at ALB/CloudFront/API Gateway for public routes
 
-### 9. coturn build source should be pinned
+### 9. Obsolete coturn bootstrap should be removed from the active infra path
 
-User data currently builds coturn from a cloned repository. Production builds should not depend on an unpinned default branch.
+The active RTC design now uses Twilio NTS through `/api/rtc-config`, so the EC2 host should no longer install, restart, or expose coturn-related ports in its current production path.
 
 Expected remediation:
 
-- pin a release tag or commit SHA
-- verify source integrity where practical
-- consider a trusted package/image instead of building from latest source during boot
+- remove coturn installation and systemd bootstrap from EC2 user data
+- remove TURN ingress rules from the signaling security group
+- stop restarting coturn during EC2 code deploys and secret refreshes
+- keep any historical coturn docs clearly marked as legacy reference only
 
 ### 10. Secret hygiene still needs final production discipline
 

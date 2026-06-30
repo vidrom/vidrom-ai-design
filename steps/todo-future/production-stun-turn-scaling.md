@@ -1,16 +1,53 @@
-# Future Task — Production STUN/TURN Infrastructure for Scale
+# Future Task — RTC Provider Hardening and Scale
+
+## Decision Update
+
+The active direction is now:
+
+- use **Twilio Network Traversal Service** as the primary STUN/TURN provider behind `GET /api/rtc-config`
+- keep **Google public STUN** as a client-side emergency fallback only
+- stop treating self-hosted coturn as the default production path while the product is still pre-production / early-stage
+
+The coturn-heavy guidance below remains useful as a cost-control and contingency reference, but it is no longer the default implementation plan.
 
 ## Problem
 
-The current STUN/TURN setup (Step 11) runs a single coturn instance on the same `t3.micro` EC2 as the signaling server. This is fine for development and a handful of intercom systems, but will not hold up when going live with many buildings, intercom devices, and residents. Specific limitations:
+The current runtime path uses Twilio NTS credentials served by the signaling backend, with Google STUN as the only emergency fallback if runtime ICE config cannot be fetched. That removes the immediate need to scale self-hosted coturn, but production hardening is still required before broader rollout. Specific limitations:
 
-- **Shared resources** — coturn competes for CPU, memory, and bandwidth with the signaling server on one tiny instance
-- **Static credentials** — a single hardcoded username/password (`<turn-username>:<turn-password>`) is baked into every app build; if leaked, anyone can abuse the TURN server
-- **No redundancy** — if the EC2 instance goes down, all calls fail (no STUN fallback, no TURN relay)
-- **No horizontal scaling** — a single coturn instance can only relay so many concurrent media streams before saturating its bandwidth or CPU
-- **Single region** — all media relays through `us-east-1`, adding latency for users in other geographies
-- **No TLS** — TURN over plain UDP/TCP; corporate firewalls that only allow port 443/TLS will still block TURN traffic
-- **No monitoring** — no visibility into relay usage, bandwidth consumption, or error rates
+- **Single managed provider** — if Twilio NTS is unavailable, strict NAT and firewall scenarios lose TURN relay entirely
+- **Emergency fallback is STUN-only** — degraded mode still cannot cover networks that require a relay
+- **Limited observability** — we still need better visibility into relay usage, Twilio token failures, and cost drivers
+- **No cost guardrails** — Twilio relay spend can rise silently without usage dashboards or alerts
+- **No explicit regional policy** — Twilio handles global POP routing, but we still need to validate latency and cost against real traffic patterns
+
+## What Needs to Change Now
+
+### 1. Keep Provider Logic Behind `/api/rtc-config`
+
+The apps should continue to fetch runtime ICE config from the signaling server rather than integrating Twilio directly.
+
+**Actions:**
+- keep Twilio credentials server-side only
+- continue returning short-lived ICE config with `expiresAt`
+- keep client caching and refresh logic tied to the backend response
+
+### 2. Add Monitoring Around Twilio Token Issuance
+
+Twilio removes ops burden, but it also moves failure modes behind an API call.
+
+**Actions:**
+- log and alert on `/api/rtc-config` failures
+- track Twilio token request latency and non-200 responses
+- add dashboards for token volume and estimated relay cost
+
+### 3. Keep a Clean Emergency Fallback Policy
+
+The fallback should remain intentionally simple.
+
+**Actions:**
+- keep Google public STUN in the apps as the only emergency fallback
+- avoid reintroducing raw-IP STUN or bundled TURN credentials in clients
+- if a second relay path is ever needed, add it behind `/api/rtc-config` rather than in app bundles
 
 ## What Needs to Change
 
@@ -114,7 +151,7 @@ A single TURN server is a single point of failure and a bottleneck. For producti
 - Can be used as the primary TURN solution, or as a fallback alongside self-hosted coturn
 - See section 6 below for a full breakdown of providers, pricing, and pros/cons
 
-**Recommendation:** Start with Option A (2 instances, DNS health checks) for cost control. Consider a managed provider (Option C / §6) as the primary solution if operational simplicity is more important than saving on relay costs, or as a global fallback alongside self-hosted.
+**Recommendation:** Keep Twilio NTS as the primary solution through pre-production and early production. Revisit self-hosted or hybrid TURN only if measured relay spend, regional performance, or provider-risk concerns justify the additional operational overhead.
 
 ### 6. Managed TURN Providers — Full Comparison
 

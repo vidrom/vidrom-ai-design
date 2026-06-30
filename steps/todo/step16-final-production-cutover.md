@@ -20,8 +20,36 @@ Current verification baseline from the latest Step 16 review:
 - production already returns `401` on `/debug/status` without admin auth
 - production already returns `401` on `/api/rtc-config` without client auth
 - production ALB health checks already point to `/healthz`
-- production WAF is already attached to the signaling ALB
+- production WAF is currently removed from the signaling ALB and portal CloudFront distribution as an approved cost-control step; see the note below and [pre-production-waf-reintroduction.md](../todo-future/pre-production-waf-reintroduction.md)
 - production RDS already has encryption, deletion protection, backup retention, and private access enabled
+
+## Current Production Note
+
+As of 2026-06-18, the production signaling ALB WAF and portal CloudFront WAF were intentionally removed to reduce recurring AWS cost while traffic remains low.
+
+This is an operational cost decision, not the final intended hardened production posture.
+
+The approved live change included:
+
+1. removal of the regional signaling ALB WAF
+2. removal of the signaling ALB WAF association
+3. removal of the portal CloudFront WAF
+4. removal of the portal distribution `WebACLId`
+
+Live verification after the change confirmed:
+
+- `https://signaling.vidrom.com/healthz` returned `200` after recovery
+- `https://portal.vidrom.com/api/admin/buildings` still returned `401` without auth
+- `https://vidrom.com/` still returned `200`
+- `https://vidrom.co.il/` still returned `200`
+
+Operational note:
+
+- the stack update also replaced the signaling EC2 instance because the deployed diff included a `UserData` change unrelated to WAF
+- this temporarily caused `502` responses from `signaling.vidrom.com`
+- service was recovered by re-running the canonical EC2 deploy path with `vidrom-cdk/deploy-server-ssm.sh`
+
+Before calling the environment production-hardened again, complete [pre-production-waf-reintroduction.md](../todo-future/pre-production-waf-reintroduction.md).
 
 ## Tasks
 
@@ -32,11 +60,12 @@ Current verification baseline from the latest Step 16 review:
    - verify SSH is not publicly exposed and SSM Session Manager still works
    - verify RDS deletion protection/encryption/retention settings
    - verify portal bucket retention behavior is appropriate for production
+   - if the stack diff would replace EC2, plan for an immediate follow-up `./deploy-server-ssm.sh` so the new instance receives the signaling app bundle
 
 2. **Deploy signaling server changes**
    - update EC2 application files and dependencies only if the deployed instance is behind the verified local workspace state
    - restart `vidrom-signaling.service`
-   - restart coturn if runtime TURN settings changed
+   - verify the host no longer runs or exposes the legacy `coturn` service
    - verify `NODE_ENV=production` startup still passes validation
 
 3. **Deploy portal Lambda changes**
@@ -46,10 +75,11 @@ Current verification baseline from the latest Step 16 review:
 
 4. **Run production secret rotation / restriction**
    - rotate JWT secret if production devices can be reprovisioned safely
-   - rotate TURN shared secret and restart both signaling and coturn
+   - rotate Twilio runtime credentials if the current values were used during development
    - rotate APNs auth key if any key material was exposed during development
    - rotate Firebase service-account secret if needed
    - restrict Firebase mobile API keys by bundle ID, Android SHA fingerprints, and allowed APIs
+   - if WAF was removed for cost control, complete [pre-production-waf-reintroduction.md](../todo-future/pre-production-waf-reintroduction.md) before treating the environment as production-hardened
 
 5. **Run live smoke tests**
    - Home login and apartment resolution

@@ -13,9 +13,10 @@ flowchart TB
         Lambda[API Lambda\nadmin + management]
 
         ALB[Application Load Balancer\nsignaling.vidrom.com]
-        EC2[EC2 Signaling Host\nNode runtime + coturn]
+        EC2[EC2 Signaling Host\nNode runtime]
         RDS[(PostgreSQL RDS\nprivate isolated subnets)]
         Secrets[Secrets Manager]
+        Twilio[Twilio NTS\nmanaged STUN/TURN]
     end
 
     CDK --> Route53
@@ -39,6 +40,7 @@ flowchart TB
     ALB --> EC2
     EC2 --> RDS
     EC2 --> Secrets
+    EC2 --> Twilio
     Lambda --> Secrets
 ```
 
@@ -47,3 +49,4 @@ flowchart TB
 - CDK owns infrastructure, DNS, portal assets, and the Lambda API deployment.
 - The EC2 signaling code is still deployed separately over SSM.
 - RDS is private and shared by both the EC2 signaling service and the Lambda portal APIs.
+- RTC relay is externalised to Twilio NTS; the EC2 host no longer owns a coturn sidecar in the active design.

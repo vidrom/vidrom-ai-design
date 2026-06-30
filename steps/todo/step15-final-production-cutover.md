@@ -80,7 +80,7 @@ On the signaling instance, confirm:
 1. `vidrom-signaling.service` runs as the dedicated `vidrom` user
 2. runtime secret files are created only under `/run/vidrom-signaling`
 3. `vidrom-secret-refresh.timer` is enabled and active
-4. a manual refresh run restarts `vidrom-signaling` and `coturn` cleanly
+4. a manual refresh run restarts `vidrom-signaling` cleanly after secret changes
 
 ### 5. Re-check the exit criteria
 
